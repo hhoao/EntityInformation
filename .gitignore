@@ -132,4 +132,4 @@ gradle-app.setting
 
 ./build
 ./gradle
-./idea/**
+.idea/**

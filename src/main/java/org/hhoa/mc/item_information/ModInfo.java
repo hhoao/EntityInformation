@@ -161,5 +161,5 @@ package org.hhoa.mc.item_information;
  * @since 2024/10/19
  */
 public class ModInfo {
-    public static final String ID = "EntityInformation";
+    public static final String ID = "entity_information";
 }

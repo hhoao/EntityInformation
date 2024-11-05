@@ -198,12 +198,13 @@ test {
 	useJUnitPlatform()
 }
 
+//println rootProject.projectDir.absolutePath
 spotless {
 	java {
 		googleJavaFormat().style("AOSP")
 		formatAnnotations()
 		var licenseBuilder = new StringBuilder("/*\n")
-		for (final def line in Files.readAllLines(Paths.get("LICENSE.txt")) ) {
+		for (final def line in Files.readAllLines(Paths.get(rootProject.projectDir.absolutePath, "LICENSE.txt")) ) {
 			licenseBuilder.append(" * ${line}\n")
 		}
 		licenseBuilder.append(" */\n\n")
