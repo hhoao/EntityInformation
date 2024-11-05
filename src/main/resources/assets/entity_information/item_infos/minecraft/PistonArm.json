@@ -1,0 +1,1 @@
+{"name":"黏性活塞","infos":{"用途":["移动方块结构","启动延迟","激活","推动实体"],"简介":["活塞是一种被红石信号激活时可以推动大多数方块和实体的方块。","黏性活塞和普通活塞的功能相同，但当红石信号结束时也能拉回被移动的方块，而普通活塞只会将方块留在原处。"],"ID":["piston_arm_collision","sticky_piston_arm_collision","moving_block","piston","sticky_piston","moving_piston","piston_head","PistonArm"],"获取":["合成"],"生成":["自然生成"]}}

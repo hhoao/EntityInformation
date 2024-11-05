@@ -1,0 +1,20 @@
+{
+  "key.gui.search": "MC百科物品搜索",
+  "key.open": "打开",
+
+  "item.entity_information.dictionary": "Mob Dictionary",
+  "item.entity_information.data": "Piece of Dictionary",
+  "entity_information.common.name": "Name",
+  "entity_information.common.register_accept": "Registered %s to MobDictionary !",
+  "entity_information.common.register_already": "Already registered %s !",
+  "entity_information.common.register_error": "Couldn't register %s !",
+  "entity_information.common.registered_value": "Registered",
+
+  "entity_information.common.unregister_accept": "UnRegistered %s from MobDictionary !",
+  "entity_information.common.unregister_not_exist": "Not exist %s in MobDictionary !",
+  "entity_information.common.unregister_error": "Couldn't unregister %s from MobDictionary !",
+
+  "entity_information.common.not_have_item": "Not have item %s!",
+  "entity_information.common.output_piece": "撕下该页",
+  "entity_information.common.need_a_paper": "需要一张纸"
+}
