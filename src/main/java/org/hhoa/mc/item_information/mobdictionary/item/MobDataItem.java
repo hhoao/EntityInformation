@@ -193,9 +193,7 @@ public class MobDataItem extends Item {
                 if (player instanceof ServerPlayer playerMP) {
                     if (!MobDatas.containsMobNameOnClient(name)) {
                         MobDatas.saveMobNameOnServer(playerMP, name);
-                        player.sendMessage(
-                                Messages.ACCEPT.withTranslatableTexts(name).getTextComponent(),
-                                player.getUUID());
+                        itemStack.shrink(1);
                     } else {
                         player.sendMessage(
                                 Messages.ALREADY.withTranslatableTexts(name).getTextComponent(),
@@ -211,7 +209,7 @@ public class MobDataItem extends Item {
             return new InteractionResultHolder<>(InteractionResult.FAIL, itemStack);
         }
 
-        return new InteractionResultHolder<>(InteractionResult.CONSUME, itemStack);
+        return new InteractionResultHolder<>(InteractionResult.SUCCESS, itemStack);
     }
 
     @Override

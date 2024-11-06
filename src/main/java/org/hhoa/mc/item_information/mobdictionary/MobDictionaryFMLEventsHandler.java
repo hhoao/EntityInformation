@@ -154,15 +154,14 @@
 
 package org.hhoa.mc.item_information.mobdictionary;
 
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
+import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.forge.event.lifecycle.GatherDataEvent;
+import org.hhoa.mc.item_information.mobdictionary.capabilities.IFirstLoginCapability;
 import org.hhoa.mc.item_information.mobdictionary.item.MobDataItem;
 import org.hhoa.mc.item_information.mobdictionary.item.MobDictionaryItem;
 import org.hhoa.mc.item_information.mobdictionary.network.PacketHandler;
@@ -196,23 +195,15 @@ public class MobDictionaryFMLEventsHandler {
                                 .setRegistryName("data"));
     }
 
-    @SuppressWarnings("unchecked")
-    @SubscribeEvent
-    public void onEntityTypeRegister(
-            final RegistryEvent.Register<EntityType<?>> blockRegistryEvent) {
-        for (EntityType<?> entityType : blockRegistryEvent.getRegistry().getValues()) {
-            MobCategory category = entityType.getCategory();
-            if (category != MobCategory.MISC) {
-                MobDictionary.getEntityManager()
-                        .addEntityType((EntityType<? extends LivingEntity>) entityType);
-            }
-        }
-    }
-
     @SubscribeEvent
     public void onGatherData(GatherDataEvent event) {
         MobDictionaryRecipeProvider myRecipeProvider =
                 new MobDictionaryRecipeProvider(event.getGenerator());
         event.getGenerator().addProvider(myRecipeProvider);
+    }
+
+    @SubscribeEvent
+    public void registerCapabilities(RegisterCapabilitiesEvent event) {
+        event.register(IFirstLoginCapability.class);
     }
 }

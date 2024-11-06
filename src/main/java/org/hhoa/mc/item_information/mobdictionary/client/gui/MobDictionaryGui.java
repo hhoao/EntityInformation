@@ -157,9 +157,11 @@ package org.hhoa.mc.item_information.mobdictionary.client.gui;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Vector3f;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
@@ -172,6 +174,7 @@ import net.minecraft.client.resources.language.I18n;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Tuple;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -204,7 +207,7 @@ public class MobDictionaryGui extends Screen {
     protected int bottomEdge = 11;
     protected int namesCenterOffsetX = 126;
 
-    private EntityType<?>[] entityTypes;
+    private Tuple<Integer, EntityType<?>>[] entityTypes;
 
     protected LivingEntity displayEntity;
 
@@ -217,6 +220,8 @@ public class MobDictionaryGui extends Screen {
 
     private static final List<ChatMessage> tooltipStringList =
             Arrays.asList(Messages.OUTPUT_PIECE, Messages.NEED_A_PAPER);
+    private HashSet<EntityType<?>> unLockedMobTypes;
+    private ArrayList<Object> unLockedMobTypesWithId;
 
     public MobDictionaryGui() {
         super(Messages.DICTIONARY_NAME.getTextComponent());
@@ -225,15 +230,41 @@ public class MobDictionaryGui extends Screen {
     @Override
     public void init() {
         this.stringHeight = font.lineHeight;
+        Set<String> unLockMobNamesOnClient = MobDatas.getUnLockMobNamesOnClient();
 
-        String[] names = MobDatas.getMobNamesOnClient().toArray(new String[0]);
-        this.entityTypes = new EntityType[names.length];
-
-        for (int i = 0; i < names.length; i++) {
-            this.entityTypes[i] = MobDictionary.getEntityManager().getEntityByName(names[i]);
+        Set<EntityType<? extends LivingEntity>> allEntities =
+                MobDictionary.getEntityManager().getAllEntities();
+        this.unLockedMobTypes = new HashSet<>();
+        List<Tuple<Integer, EntityType<?>>> unLockedMobTypesWithId = new ArrayList<>();
+        List<Tuple<Integer, EntityType<?>>> lockedMobTypesWithId = new ArrayList<>();
+        int i = 1;
+        for (EntityType<? extends LivingEntity> entityType : allEntities) {
+            if (unLockMobNamesOnClient.contains(entityType.getDescriptionId())) {
+                unLockedMobTypes.add(entityType);
+                unLockedMobTypesWithId.add(new Tuple<>(i, entityType));
+            } else {
+                lockedMobTypesWithId.add(new Tuple<>(i, entityType));
+            }
+            i++;
         }
-
-        Arrays.sort(this.entityTypes, Comparator.comparing(EntityType::getDescriptionId));
+        ArrayList<Tuple<Integer, EntityType<?>>> entityTypes = new ArrayList<>();
+        entityTypes.addAll(
+                unLockedMobTypesWithId.stream()
+                        .sorted(
+                                (o1, o2) ->
+                                        CharSequence.compare(
+                                                o1.getB().getDescriptionId(),
+                                                o2.getB().getDescriptionId()))
+                        .toList());
+        entityTypes.addAll(
+                lockedMobTypesWithId.stream()
+                        .sorted(
+                                (o1, o2) ->
+                                        CharSequence.compare(
+                                                o1.getB().getDescriptionId(),
+                                                o2.getB().getDescriptionId()))
+                        .toList());
+        this.entityTypes = entityTypes.toArray(new Tuple[0]);
 
         int originX = (this.width - this.xSize) / 2;
         int originY = (this.height - this.ySize) / 2;
@@ -259,7 +290,7 @@ public class MobDictionaryGui extends Screen {
                 if (inventory.contains(paper)) {
                     MobDictionaryGuiButtonClickEvent mobDictionaryGuiButtonClickEvent =
                             new MobDictionaryGuiButtonClickEvent(
-                                    this.entityTypes[this.currentNo].getDescriptionId());
+                                    this.entityTypes[this.currentNo].getB().getDescriptionId());
                     PacketHandler.CHANNEL.sendToServer(mobDictionaryGuiButtonClickEvent);
                 } else {
                     player.sendMessage(
@@ -311,12 +342,16 @@ public class MobDictionaryGui extends Screen {
         this.drawGuiBackgroundLayer(matrixStack);
 
         if (this.entityTypes.length > 0) {
-            initDisplayEntity(this.entityTypes[this.currentNo]);
+            initDisplayEntity(this.entityTypes[this.currentNo].getB());
         }
 
         if (this.displayEntity != null) {
-            this.drawMobModel();
-            this.drawMobInfo(matrixStack);
+            drawMobModel();
+            if (isUnLock(this.displayEntity)) {
+                drawUnLockMobInfo(matrixStack);
+            } else {
+                drawLockMobInfo(matrixStack);
+            }
         }
 
         this.drawMobNames(matrixStack, mouseX, mouseY);
@@ -367,14 +402,21 @@ public class MobDictionaryGui extends Screen {
         this.blit(matrixStack, k, l, 0, 0, this.xSize, this.ySize);
     }
 
-    public void drawMobInfo(PoseStack matrixStack) {
+    private void drawLockMobInfo(PoseStack matrixStack) {
+        int originX = (this.width - this.xSize) / 2;
+        int originY = (this.height - this.ySize) / 2;
+
+        this.font.draw(matrixStack, "??????", originX + 19, originY + 85, this.stringColor);
+    }
+
+    public void drawUnLockMobInfo(PoseStack matrixStack) {
         int originX = (this.width - this.xSize) / 2;
         int originY = (this.height - this.ySize) / 2;
 
         this.font.draw(matrixStack, "Name:", originX + 19, originY + 85, this.stringColor);
         this.font.draw(matrixStack, "Health:", originX + 19, originY + 106, this.stringColor);
         if (displayEntity != null) {
-            EntityType<?> pair = this.entityTypes[this.currentNo];
+            EntityType<?> pair = this.entityTypes[this.currentNo].getB();
             this.font.draw(
                     matrixStack,
                     I18n.get(pair.getDescriptionId()),
@@ -412,10 +454,12 @@ public class MobDictionaryGui extends Screen {
                 }
 
                 int var1 = i + this.scrollAmount;
-                String translatedName =
-                        Language.getInstance()
-                                .getOrDefault(this.entityTypes[var1].getDescriptionId());
-                int stringWidth = this.font.width(translatedName);
+                EntityType<?> entityType = this.entityTypes[var1].getB();
+                Integer id = this.entityTypes[var1].getA();
+                boolean unLock = isUnLock(entityType);
+                String displayName = getDisplayName(entityType, unLock, id);
+
+                int stringWidth = this.font.width(displayName);
                 int color =
                         var1 == this.currentNo
                                         || isMouseInArea(
@@ -440,15 +484,25 @@ public class MobDictionaryGui extends Screen {
                                                                                         .stringYMargin)
                                                                 + this.stringHeight))
                                 ? 0xffffff
-                                : this.stringColor;
+                                : unLock ? this.stringColor : 0x404040;
                 this.font.draw(
                         matrixStack,
-                        translatedName,
+                        displayName,
                         originX + namesCenterOffsetX - (float) stringWidth / 2,
                         originY + this.topEdge + (i * (this.stringHeight + this.stringYMargin)),
                         color);
             }
         }
+    }
+
+    private String getDisplayName(EntityType<?> entityType, boolean unLock, Integer id) {
+        String displayName;
+        if (unLock) {
+            displayName = Language.getInstance().getOrDefault(entityType.getDescriptionId());
+        } else {
+            displayName = Messages.UNKNOWN_BIOLOGY.getText() + id;
+        }
+        return displayName;
     }
 
     @Override
@@ -517,7 +571,12 @@ public class MobDictionaryGui extends Screen {
         poseStack.scale(scale, scale, scale);
         poseStack.mulPose(Vector3f.ZP.rotationDegrees(180F));
 
-        int light = LightTexture.pack(15, 15);
+        int light;
+        if (!isUnLock(displayEntity)) {
+            light = LightTexture.pack(0, 0);
+        } else {
+            light = LightTexture.pack(15, 15);
+        }
 
         MultiBufferSource.BufferSource bufferSource =
                 Minecraft.getInstance().renderBuffers().bufferSource();
@@ -527,6 +586,14 @@ public class MobDictionaryGui extends Screen {
         renderer.render(this.displayEntity, 0.0F, 1.0F, poseStack, bufferSource, light);
 
         bufferSource.endBatch();
+    }
+
+    private boolean isUnLock(LivingEntity displayEntity) {
+        return unLockedMobTypes.contains(displayEntity.getType());
+    }
+
+    private boolean isUnLock(EntityType<?> entityType) {
+        return unLockedMobTypes.contains(entityType);
     }
 
     private void initDisplayEntity(EntityType<?> entityResourceLocation) {

@@ -22,5 +22,7 @@
   "entity_information.common.not_have_item": "Not have item %s!",
 
   "entity_information.common.output_piece": "Ouput Piece",
-  "entity_information.common.need_a_paper": "need a paper"
+  "entity_information.common.need_a_paper": "need a paper",
+
+  "entity_information.common.unknown_biology": "Unknown Creatures"
 }

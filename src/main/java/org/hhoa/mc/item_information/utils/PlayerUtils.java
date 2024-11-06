@@ -197,4 +197,10 @@ public class PlayerUtils {
 
         return player.level.addFreshEntity(itemEntity);
     }
+
+    public static void addItemToPlayer(ItemStack itemStack, Player player) {
+        if (!player.getInventory().add(itemStack)) {
+            player.drop(itemStack, false);
+        }
+    }
 }

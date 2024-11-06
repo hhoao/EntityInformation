@@ -172,26 +172,29 @@ public class ServerSyncDataMessageHandler {
                             LocalPlayer player = Minecraft.getInstance().player;
                             Collection<String> nameList = message.getNameList();
                             MobDatas.RequestType requestType = message.getRequestType();
-                            ArrayList<String> successMobNames = null;
-                            if (requestType == MobDatas.RequestType.PUT) {
-                                successMobNames = MobDatas.addMobNamesOnClient(nameList);
-                            } else if (requestType == MobDatas.RequestType.DELETE) {
-                                successMobNames = MobDatas.removeMobNamesOnClient(nameList);
-                            }
+                            ArrayList<String> successMobNames =
+                                    switch (requestType) {
+                                        case PUT, REGISTER ->
+                                                MobDatas.addMobNamesOnClient(nameList);
+                                        case DELETE -> MobDatas.removeMobNamesOnClient(nameList);
+                                        default -> null;
+                                    };
 
-                            ChatMessage chatMessage =
-                                    requestType == MobDatas.RequestType.PUT
-                                            ? Messages.ACCEPT
-                                            : Messages.UNREGISTER;
-                            if (player != null
-                                    && successMobNames != null
-                                    && !successMobNames.isEmpty()) {
-                                player.sendMessage(
-                                        chatMessage
-                                                .withTranslatableTexts(
-                                                        nameList.toArray(new String[0]))
-                                                .getTextComponent(),
-                                        player.getUUID());
+                            if (requestType != MobDatas.RequestType.REGISTER) {
+                                ChatMessage chatMessage =
+                                        requestType == MobDatas.RequestType.PUT
+                                                ? Messages.ACCEPT
+                                                : Messages.UNREGISTER;
+                                if (player != null
+                                        && successMobNames != null
+                                        && !successMobNames.isEmpty()) {
+                                    player.sendMessage(
+                                            chatMessage
+                                                    .withTranslatableTexts(
+                                                            nameList.toArray(new String[0]))
+                                                    .getTextComponent(),
+                                            player.getUUID());
+                                }
                             }
                         });
 

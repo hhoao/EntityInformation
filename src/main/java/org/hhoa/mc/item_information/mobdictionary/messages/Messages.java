@@ -178,4 +178,6 @@ public class Messages {
     public static final ChatMessage NEED_A_PAPER =
             new TranslatableChatMessage("common.need_a_paper");
     public static final ChatMessage NAME = new TranslatableChatMessage("common.name");
+    public static final ChatMessage UNKNOWN_BIOLOGY =
+            new TranslatableChatMessage("common.unknown_biology");
 }

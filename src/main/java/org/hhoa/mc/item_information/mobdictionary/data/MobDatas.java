@@ -192,7 +192,7 @@ public final class MobDatas {
         return clientMobNameSet.size();
     }
 
-    public static Set<String> getMobNamesOnClient() {
+    public static Set<String> getUnLockMobNamesOnClient() {
         return clientMobNameSet;
     }
 
@@ -204,7 +204,7 @@ public final class MobDatas {
         MobSavedData mobSavedData = getMobSavedData(player);
         Set<String> mobNameList = mobSavedData.getMobNameSet();
 
-        sendSyncDataMessageOnServer(player, mobNameList, RequestType.PUT);
+        sendSyncDataMessageOnServer(player, mobNameList, RequestType.REGISTER);
     }
 
     public static void saveMobNameOnServer(ServerPlayer player, String mobName) throws IOException {
@@ -271,9 +271,7 @@ public final class MobDatas {
                 MobDictionary.getEntityManager().getEntityTypes().stream()
                         .map(EntityType::getDescriptionId)
                         .toList();
-        MobSavedData mobSavedData = getMobSavedData(serverPlayer);
-        mobSavedData.addMobNames(list);
-        sendSyncDataMessageOnServer(serverPlayer, list, RequestType.PUT);
+        saveMobNamesOnServer(serverPlayer, list);
     }
 
     public static void sendSyncDataOnClient(Collection<String> names, RequestType requestType) {
@@ -313,6 +311,7 @@ public final class MobDatas {
     public enum RequestType {
         PUT,
         DELETE,
-        QUERY;
+        QUERY,
+        REGISTER
     }
 }
