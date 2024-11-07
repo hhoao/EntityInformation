@@ -178,6 +178,7 @@ import net.minecraft.util.Tuple;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -188,6 +189,7 @@ import org.hhoa.mc.item_information.mobdictionary.messages.ChatMessage;
 import org.hhoa.mc.item_information.mobdictionary.messages.Messages;
 import org.hhoa.mc.item_information.mobdictionary.network.MobDictionaryGuiButtonClickEvent;
 import org.hhoa.mc.item_information.mobdictionary.network.PacketHandler;
+import org.hhoa.mc.item_information.utils.EntityUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class MobDictionaryGui extends Screen {
@@ -429,6 +431,9 @@ public class MobDictionaryGui extends Screen {
                     originX + 19,
                     originY + 116,
                     this.stringColor);
+            int armorValue = displayEntity.getArmorValue();
+            double attackDamage =
+                    EntityUtils.getEntityAttribute(displayEntity, Attributes.ATTACK_DAMAGE);
         }
     }
 

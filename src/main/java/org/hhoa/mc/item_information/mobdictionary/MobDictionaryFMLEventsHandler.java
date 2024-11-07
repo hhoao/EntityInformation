@@ -160,6 +160,7 @@ import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.forge.event.lifecycle.GatherDataEvent;
 import org.hhoa.mc.item_information.mobdictionary.capabilities.IFirstLoginCapability;
 import org.hhoa.mc.item_information.mobdictionary.item.MobDataItem;
@@ -176,6 +177,9 @@ import org.hhoa.mc.item_information.mobdictionary.recipes.MobDictionaryRecipePro
 public class MobDictionaryFMLEventsHandler {
     @SubscribeEvent
     public void preInit(FMLCommonSetupEvent event) {
+        MobDictionary.RECIPE_SERIALIZERS.register(FMLJavaModLoadingContext.get().getModEventBus());
+        //        MobDictionary.RECIPE_SERIALIZERS.register("dictionary",
+        // ShapedRecipe.Serializer::new);
         PacketHandler.registerMessages();
     }
 
@@ -194,6 +198,14 @@ public class MobDictionaryFMLEventsHandler {
                                                 .tab(CreativeModeTab.TAB_TOOLS))
                                 .setRegistryName("data"));
     }
+
+    //    @SubscribeEvent
+    //    public void onRegisterRecipeSerializer(RegistryEvent.Register<RecipeSerializer<?>> event)
+    // {
+    //        event.getRegistry().registerAll(
+    //            new MobDictionaryRecipe.Serializer().setRegistryName("dictionary")
+    //        );
+    //    }
 
     @SubscribeEvent
     public void onGatherData(GatherDataEvent event) {

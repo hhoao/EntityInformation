@@ -161,10 +161,9 @@ import net.minecraft.data.recipes.FinishedRecipe;
 import net.minecraft.data.recipes.RecipeProvider;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.tags.ItemTags;
 import net.minecraft.world.item.Items;
 import net.minecraftforge.common.crafting.ConditionalRecipe;
-import org.hhoa.mc.item_information.mobdictionary.Conditions;
+import net.minecraftforge.common.crafting.conditions.TrueCondition;
 import org.hhoa.mc.item_information.mobdictionary.MobDictionary;
 import org.jetbrains.annotations.NotNull;
 
@@ -176,32 +175,20 @@ public class MobDictionaryRecipeProvider extends RecipeProvider {
     @Override
     protected void buildCraftingRecipes(@NotNull Consumer<FinishedRecipe> consumer) {
         super.buildCraftingRecipes(consumer);
-        ResourceLocation beltId =
+        ResourceLocation mobDictionaryRegistryName =
                 Objects.requireNonNull(MobDictionary.mobDictionary.getRegistryName());
 
         ConditionalRecipe.builder()
-                .addCondition(new Conditions.EnableNormalCrafting())
+                .addCondition(TrueCondition.INSTANCE)
                 .addRecipe(
                         ShapedRecipeBuilder.shaped(MobDictionary.mobDictionary)
-                                        .pattern("a a") // Create recipe pattern
-                                        .define(
-                                                'a',
-                                                Items.BOOK) // Define what the symbol represents
-                                        .unlockedBy("criteria", has(ItemTags.LECTERN_BOOKS))
+                                        .pattern("aa ")
+                                        .pattern("   ")
+                                        .pattern("   ")
+                                        .define('a', Items.BOOK)
+                                        .unlockedBy("has_book", has(Items.BOOK))
                                 ::save)
                 .generateAdvancement()
-                .build(consumer, beltId);
-
-        ConditionalRecipe.builder()
-                .addCondition(new Conditions.EnableNormalCrafting())
-                .addRecipe(
-                        ShapedRecipeBuilder.shaped(MobDictionary.mobData)
-                                        .pattern("a a") // Create recipe pattern
-                                        .define('a', Items.DIAMOND) // Define what the symbol
-                                        // represents
-                                        .unlockedBy("criteria", has(ItemTags.LECTERN_BOOKS))
-                                ::save)
-                .generateAdvancement()
-                .build(consumer, beltId);
+                .build(consumer, mobDictionaryRegistryName);
     }
 }

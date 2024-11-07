@@ -152,46 +152,48 @@
  * This Source Code Form is “Incompatible With Secondary Licenses”, as defined by the Mozilla Public License, v. 2.0.
  */
 
-package org.hhoa.mc.item_information.mobdictionary;
+package org.hhoa.mc.item_information.mobdictionary.recipes;
 
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.crafting.RecipeSerializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import java.io.IOException;
+import net.minecraft.core.NonNullList;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.ShapedRecipe;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.ObjectHolder;
-import net.minecraftforge.registries.RegistryObject;
-import org.hhoa.mc.item_information.ModInfo;
+import org.hhoa.mc.item_information.mobdictionary.MobDictionary;
+import org.hhoa.mc.item_information.utils.ResourcesUtils;
 
-public class MobDictionary {
-    public static MobDictionary INSTANCE;
-
-    @ObjectHolder(("entity_information:dictionary"))
-    public static Item mobDictionary;
-
-    @ObjectHolder("entity_information:data")
-    public static Item mobData;
-
-    private static EntityManager entityManager;
-
-    public static final DeferredRegister<RecipeSerializer<?>> RECIPE_SERIALIZERS =
-            DeferredRegister.create(ForgeRegistries.RECIPE_SERIALIZERS, ModInfo.ID);
-
-    public static final RegistryObject<ShapedRecipe.Serializer> MY_CUSTOM_RECIPE_SERIALIZER =
-            RECIPE_SERIALIZERS.register("dictionary", ShapedRecipe.Serializer::new);
-
-    public MobDictionary() {
-        INSTANCE = this;
-        IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
-        modEventBus.register(new MobDictionaryFMLEventsHandler());
-        MinecraftForge.EVENT_BUS.register(new MobDictionaryForgeEventsHandler());
-        entityManager = new EntityManager();
+public class MobDictionaryRecipe extends ShapedRecipe {
+    public MobDictionaryRecipe(
+            ResourceLocation recipeId,
+            String group,
+            int width,
+            int height,
+            NonNullList<Ingredient> recipeItems,
+            ItemStack result) {
+        super(recipeId, group, width, height, recipeItems, result);
     }
 
-    public static EntityManager getEntityManager() {
-        return entityManager;
+    public static class MobDictionaryRecipeSerializer extends ShapedRecipe.Serializer {
+        @Override
+        public ShapedRecipe fromJson(ResourceLocation recipeId, JsonObject jsonObject) {
+            try {
+                String s = ResourcesUtils.readResourceLocationAsString(recipeId);
+                JsonElement jsonElement = jsonObject.get(s);
+                Ingredient ingredient = Ingredient.fromJson(jsonElement);
+                NonNullList<Ingredient> ingredients = NonNullList.of(ingredient);
+                return new MobDictionaryRecipe(
+                        recipeId,
+                        "tools",
+                        3,
+                        3,
+                        ingredients,
+                        new ItemStack(MobDictionary.mobDictionary, 1));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 }

@@ -152,46 +152,26 @@
  * This Source Code Form is “Incompatible With Secondary Licenses”, as defined by the Mozilla Public License, v. 2.0.
  */
 
-package org.hhoa.mc.item_information.mobdictionary;
+package org.hhoa.mc.item_information.utils;
 
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.crafting.RecipeSerializer;
-import net.minecraft.world.item.crafting.ShapedRecipe;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.ObjectHolder;
-import net.minecraftforge.registries.RegistryObject;
-import org.hhoa.mc.item_information.ModInfo;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 
-public class MobDictionary {
-    public static MobDictionary INSTANCE;
+/**
+ * EntityUtils
+ *
+ * @author xianxing
+ * @since 2024/11/7
+ */
+public class EntityUtils {
+    public static double getEntityAttribute(LivingEntity entity, Attribute attribute) {
+        AttributeInstance attributeInstance = entity.getAttribute(attribute);
 
-    @ObjectHolder(("entity_information:dictionary"))
-    public static Item mobDictionary;
-
-    @ObjectHolder("entity_information:data")
-    public static Item mobData;
-
-    private static EntityManager entityManager;
-
-    public static final DeferredRegister<RecipeSerializer<?>> RECIPE_SERIALIZERS =
-            DeferredRegister.create(ForgeRegistries.RECIPE_SERIALIZERS, ModInfo.ID);
-
-    public static final RegistryObject<ShapedRecipe.Serializer> MY_CUSTOM_RECIPE_SERIALIZER =
-            RECIPE_SERIALIZERS.register("dictionary", ShapedRecipe.Serializer::new);
-
-    public MobDictionary() {
-        INSTANCE = this;
-        IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
-        modEventBus.register(new MobDictionaryFMLEventsHandler());
-        MinecraftForge.EVENT_BUS.register(new MobDictionaryForgeEventsHandler());
-        entityManager = new EntityManager();
-    }
-
-    public static EntityManager getEntityManager() {
-        return entityManager;
+        if (attributeInstance != null) {
+            return attributeInstance.getValue();
+        } else {
+            return attribute.getDefaultValue();
+        }
     }
 }
