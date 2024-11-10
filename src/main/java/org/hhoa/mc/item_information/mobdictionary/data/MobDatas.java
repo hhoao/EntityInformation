@@ -170,6 +170,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EntityType;
 import net.minecraftforge.network.NetworkDirection;
 import org.hhoa.mc.item_information.mobdictionary.MobDictionary;
+import org.hhoa.mc.item_information.mobdictionary.network.EventType;
 import org.hhoa.mc.item_information.mobdictionary.network.PacketHandler;
 import org.hhoa.mc.item_information.mobdictionary.network.packet.syncdata.ClientSyncDataMessage;
 import org.hhoa.mc.item_information.mobdictionary.network.packet.syncdata.ServerSyncDataMessage;
@@ -204,35 +205,35 @@ public final class MobDatas {
         MobSavedData mobSavedData = getMobSavedData(player);
         Set<String> mobNameList = mobSavedData.getMobNameSet();
 
-        sendSyncDataMessageOnServer(player, mobNameList, RequestType.REGISTER);
+        sendSyncDataMessageOnServer(player, mobNameList, EventType.REGISTER);
     }
 
     public static void saveMobNameOnServer(ServerPlayer player, String mobName) throws IOException {
         MobSavedData mobSavedData = getMobSavedData(player);
         mobSavedData.addMobName(mobName);
 
-        sendSyncDataMessageOnServer(player, Collections.singleton(mobName), RequestType.PUT);
+        sendSyncDataMessageOnServer(player, Collections.singleton(mobName), EventType.PUT);
     }
 
     public static void saveMobNamesOnServer(ServerPlayer sender, Collection<String> mobNames) {
         MobSavedData mobSavedData = getMobSavedData(sender);
         mobSavedData.addMobNames(mobNames);
 
-        sendSyncDataMessageOnServer(sender, mobNames, RequestType.PUT);
+        sendSyncDataMessageOnServer(sender, mobNames, EventType.PUT);
     }
 
     public static void removeMobNameOnServer(ServerPlayer player, String mobName) {
         MobSavedData mobSavedData = getMobSavedData(player);
         mobSavedData.removeMobName(mobName);
 
-        sendSyncDataMessageOnServer(player, Collections.singleton(mobName), RequestType.DELETE);
+        sendSyncDataMessageOnServer(player, Collections.singleton(mobName), EventType.DELETE);
     }
 
     public static void removeMobNameOnServer(ServerPlayer player, Collection<String> mobNames) {
         MobSavedData mobSavedData = getMobSavedData(player);
         mobSavedData.removeMobNames(mobNames);
 
-        sendSyncDataMessageOnServer(player, mobNames, RequestType.DELETE);
+        sendSyncDataMessageOnServer(player, mobNames, EventType.DELETE);
     }
 
     private static MobSavedData getMobSavedData(ServerPlayer serverPlayer) {
@@ -263,7 +264,7 @@ public final class MobDatas {
     public static void clearMobNameOnServer(ServerPlayer serverPlayer) {
         MobSavedData mobSavedData = getMobSavedData(serverPlayer);
         HashSet<String> mobNames = mobSavedData.clearMobNames();
-        sendSyncDataMessageOnServer(serverPlayer, mobNames, RequestType.DELETE);
+        sendSyncDataMessageOnServer(serverPlayer, mobNames, EventType.DELETE);
     }
 
     public static void unlockAllMobNameOnServer(ServerPlayer serverPlayer) {
@@ -274,13 +275,13 @@ public final class MobDatas {
         saveMobNamesOnServer(serverPlayer, list);
     }
 
-    public static void sendSyncDataOnClient(Collection<String> names, RequestType requestType) {
+    public static void sendSyncDataOnClient(Collection<String> names, EventType requestType) {
         SyncDataMessage syncDataMessage = new ClientSyncDataMessage(names, requestType);
         PacketHandler.CHANNEL.sendToServer(syncDataMessage);
     }
 
     public static void sendSyncDataMessageOnServer(
-            ServerPlayer serverPlayer, Collection<String> names, RequestType requestType) {
+            ServerPlayer serverPlayer, Collection<String> names, EventType requestType) {
         SyncDataMessage syncDataMessage = new ServerSyncDataMessage(names, requestType);
         PacketHandler.CHANNEL.sendTo(
                 syncDataMessage,
@@ -306,12 +307,5 @@ public final class MobDatas {
             }
         }
         return addMobNames;
-    }
-
-    public enum RequestType {
-        PUT,
-        DELETE,
-        QUERY,
-        REGISTER
     }
 }

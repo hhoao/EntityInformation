@@ -152,13 +152,29 @@
  * This Source Code Form is “Incompatible With Secondary Licenses”, as defined by the Mozilla Public License, v. 2.0.
  */
 
-package org.hhoa.mc.item_information.mobdictionary.network.packet.syncdata;
+package org.hhoa.mc.item_information.mobdictionary.network;
 
-import java.util.Collection;
-import org.hhoa.mc.item_information.mobdictionary.network.EventType;
+/**
+ * MessageHandler
+ *
+ * @author xianxing
+ * @since 2024/11/9
+ */
+public class EventHandlerWrapper implements EventHandler {
+    private final String id;
+    private final EventHandler innerEventHandler;
 
-public class ClientSyncDataMessage extends SyncDataMessage {
-    public ClientSyncDataMessage(Collection<String> names, EventType requestType) {
-        super(names, requestType);
+    public EventHandlerWrapper(String id, EventHandler innerEventHandler) {
+        this.id = id;
+        this.innerEventHandler = innerEventHandler;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    @Override
+    public void handle(Event event) {
+        innerEventHandler.handle(event);
     }
 }

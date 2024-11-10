@@ -159,7 +159,6 @@ import java.util.function.Supplier;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraftforge.network.NetworkEvent;
@@ -174,7 +173,7 @@ import org.hhoa.mc.item_information.utils.PlayerUtils;
  * @author xianxing
  * @since 2024/11/3
  */
-public class MobDictionaryGuiButtonClickEvent {
+public class MobDictionaryGuiButtonClickEvent implements Event {
     private final String currentMobName;
 
     public MobDictionaryGuiButtonClickEvent(String currentMobName) {
@@ -183,6 +182,11 @@ public class MobDictionaryGuiButtonClickEvent {
 
     public String getCurrentMobName() {
         return currentMobName;
+    }
+
+    @Override
+    public EventType getRequestType() {
+        return EventType.MOB_DICTIONARY_GUI_BUTTON_CLICK_EVENT;
     }
 
     public static MobDictionaryGuiButtonClickEvent decode(FriendlyByteBuf buf) {
@@ -200,13 +204,17 @@ public class MobDictionaryGuiButtonClickEvent {
                 .enqueueWork(
                         () -> {
                             ServerPlayer player = ctx.get().getSender();
-                            if (player != null) {
-                                String mobName = message.getCurrentMobName();
-                                Inventory inventory = player.getInventory();
+                            String mobName = message.getCurrentMobName();
+                            if (player != null
+                                    && MobDatas.containsMobNameOnServer(mobName, player)) {
                                 ItemStack mobDataItemStack =
                                         MobDictionary.mobData.getDefaultInstance();
                                 ItemStack paper = new ItemStack(Items.PAPER, 1);
-                                if (inventory.contains(paper)) {
+                                ItemStack feather = new ItemStack(Items.FEATHER, 1);
+                                if (PlayerUtils.hasItemCount(player, paper)
+                                        && PlayerUtils.hasItemCount(player, feather)) {
+                                    PlayerUtils.removeSingleItemFromPlayer(player, paper);
+                                    PlayerUtils.removeSingleItemFromPlayer(player, feather);
                                     CompoundTag tag =
                                             mobDataItemStack.getTag() == null
                                                     ? new CompoundTag()

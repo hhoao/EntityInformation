@@ -174,6 +174,8 @@ import java.util.Set;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.resources.language.I18n;
+import net.minecraft.client.resources.language.LanguageManager;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.resources.ResourceLocation;
@@ -187,6 +189,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.Logger;
 import org.hhoa.mc.item_information.ModInfo;
+import org.hhoa.mc.item_information.config.Configs;
 import org.hhoa.mc.item_information.itemtooltip.item.ItemInfo;
 import org.hhoa.mc.item_information.itemtooltip.kaymap.ItemTooltipKeyMappingRegistry;
 import org.hhoa.mc.item_information.utils.LoggerUtils;
@@ -199,55 +202,59 @@ public class ItemTooltipForgeEventsHandler {
 
     @SubscribeEvent
     public static void onItemTooltip(ItemTooltipEvent event) throws IOException {
-        ResourceLocation registryName = event.getItemStack().getItem().getRegistryName();
-        List<Component> toolTip = event.getToolTip();
-        if (registryName != null) {
-            String name = toolTip.get(0).getString();
-            Set<Component> itemInfoComponents = null;
-            String resourcePath =
-                    String.format(
-                            "item_infos/%s/%s.json",
-                            registryName.getNamespace(), registryName.getPath());
-            try {
-                itemInfoComponents =
-                        itemCache.get(
-                                registryName,
-                                () -> {
-                                    ResourceLocation itemInfoResourceLocation =
-                                            new ResourceLocation(ModInfo.ID, resourcePath);
-                                    if (Minecraft.getInstance()
-                                            .getResourceManager()
-                                            .hasResource(itemInfoResourceLocation)) {
-                                        Resource resource =
-                                                Minecraft.getInstance()
-                                                        .getResourceManager()
-                                                        .getResource(itemInfoResourceLocation);
-                                        InputStream inputStream = resource.getInputStream();
-                                        String json =
-                                                new String(
-                                                        inputStream.readAllBytes(),
-                                                        StandardCharsets.UTF_8);
-                                        ItemInfo itemInfo = gson.fromJson(json, ItemInfo.class);
-                                        Map<String, Set<String>> infos = itemInfo.getInfos();
-                                        Set<Component> descComponent = new HashSet<>();
-                                        descComponent.add(getDescComponent(infos.get("简介"), name));
-                                        descComponent.add(getUseComponent(infos.get("用途")));
-                                        descComponent.add(getGetComponent(infos.get("获取")));
-                                        descComponent.add(getGenerateComponent(infos.get("生成")));
-                                        descComponent.remove(null);
-                                        return descComponent;
-                                    }
-                                    return null;
-                                });
-            } catch (Exception ignored) {
-            }
-            if (itemInfoComponents != null) {
-                Component nameComponent = toolTip.remove(0);
-                ArrayList<Component> components = new ArrayList<>(toolTip);
-                toolTip.clear();
-                toolTip.add(nameComponent);
-                toolTip.addAll(components);
-                toolTip.addAll(itemInfoComponents);
+        if (Configs.enableItemToolTip) {
+            ResourceLocation registryName = event.getItemStack().getItem().getRegistryName();
+            List<Component> toolTip = event.getToolTip();
+            if (registryName != null) {
+                String name = toolTip.get(0).getString();
+                Set<Component> itemInfoComponents = null;
+                String resourcePath =
+                        String.format(
+                                "item_infos/%s/%s.json",
+                                registryName.getNamespace(), registryName.getPath());
+                try {
+                    itemInfoComponents =
+                            itemCache.get(
+                                    registryName,
+                                    () -> {
+                                        ResourceLocation itemInfoResourceLocation =
+                                                new ResourceLocation(ModInfo.ID, resourcePath);
+                                        if (Minecraft.getInstance()
+                                                .getResourceManager()
+                                                .hasResource(itemInfoResourceLocation)) {
+                                            Resource resource =
+                                                    Minecraft.getInstance()
+                                                            .getResourceManager()
+                                                            .getResource(itemInfoResourceLocation);
+                                            InputStream inputStream = resource.getInputStream();
+                                            String json =
+                                                    new String(
+                                                            inputStream.readAllBytes(),
+                                                            StandardCharsets.UTF_8);
+                                            ItemInfo itemInfo = gson.fromJson(json, ItemInfo.class);
+                                            Map<String, Set<String>> infos = itemInfo.getInfos();
+                                            Set<Component> descComponent = new HashSet<>();
+                                            descComponent.add(
+                                                    getDescComponent(infos.get("简介"), name));
+                                            descComponent.add(getUseComponent(infos.get("用途")));
+                                            descComponent.add(getGetComponent(infos.get("获取")));
+                                            descComponent.add(
+                                                    getGenerateComponent(infos.get("生成")));
+                                            descComponent.remove(null);
+                                            return descComponent;
+                                        }
+                                        return null;
+                                    });
+                } catch (Exception ignored) {
+                }
+                if (itemInfoComponents != null) {
+                    Component nameComponent = toolTip.remove(0);
+                    ArrayList<Component> components = new ArrayList<>(toolTip);
+                    toolTip.clear();
+                    toolTip.add(nameComponent);
+                    toolTip.addAll(components);
+                    toolTip.addAll(itemInfoComponents);
+                }
             }
         }
     }
@@ -313,13 +320,28 @@ public class ItemTooltipForgeEventsHandler {
             ScreenEvent.KeyboardKeyPressedEvent.Post event) {
         Screen screen = event.getScreen();
         try {
-            if (screen instanceof AbstractContainerScreen
-                    && ItemTooltipKeyMappingRegistry.searchKeyMapping != null
-                    && event.getKeyCode()
-                            == ItemTooltipKeyMappingRegistry.searchKeyMapping.getKey().getValue()) {
-                Slot slotUnderMouse = ((AbstractContainerScreen<?>) screen).getSlotUnderMouse();
-                if (slotUnderMouse != null) {
-                    openItemSearchWeb(slotUnderMouse.getItem());
+            if (screen instanceof AbstractContainerScreen) {
+                if (ItemTooltipKeyMappingRegistry.searchKeyMapping != null
+                        && event.getKeyCode()
+                                == ItemTooltipKeyMappingRegistry.searchKeyMapping
+                                        .getKey()
+                                        .getValue()) {
+                    Slot slotUnderMouse = ((AbstractContainerScreen<?>) screen).getSlotUnderMouse();
+                    if (slotUnderMouse != null) {
+                        openItemSearchWeb(slotUnderMouse.getItem());
+                    }
+                } else if (ItemTooltipKeyMappingRegistry.enableItemTooltipKeyMapping != null
+                        && event.getKeyCode()
+                                == ItemTooltipKeyMappingRegistry.enableItemTooltipKeyMapping
+                                        .getKey()
+                                        .getValue()) {
+                    Configs.enableItemToolTip = !Configs.enableItemToolTip;
+                } else if (ItemTooltipKeyMappingRegistry.changeSearchEngine != null
+                        && event.getKeyCode()
+                                == ItemTooltipKeyMappingRegistry.changeSearchEngine
+                                        .getKey()
+                                        .getValue()) {
+                    Configs.useWiki = !Configs.useWiki;
                 }
             }
         } catch (Exception e) {
@@ -327,8 +349,24 @@ public class ItemTooltipForgeEventsHandler {
         }
     }
 
+    public static void openItemSearchWebOnWiki(ItemStack stack) throws IOException {
+        LanguageManager languageManager = Minecraft.getInstance().getLanguageManager();
+        String name = languageManager.getSelected().getCode().split("_")[0];
+        String itemName = I18n.get(stack.getDescriptionId()).replace(" ", "_");
+        String apiUrl = String.format("https://%s.minecraft.wiki/w/%s", name, itemName);
+        openBrowser(apiUrl);
+    }
+
     public static void openItemSearchWeb(ItemStack stack) throws IOException {
         LOG.info("Open {}", stack);
+        if (Configs.useWiki) {
+            openItemSearchWebOnWiki(stack);
+        } else {
+            openItemSearchWebOnMcmod(stack);
+        }
+    }
+
+    public static void openItemSearchWebOnMcmod(ItemStack stack) throws IOException {
         String modName =
                 URLEncoder.encode(
                         Objects.requireNonNull(stack.getItem().getCreatorModId(stack)),
@@ -351,10 +389,14 @@ public class ItemTooltipForgeEventsHandler {
                         : String.format(
                                 "https://search.mcmod.cn/s?key=%s+%s", modName, displayName);
 
+        openBrowser(url);
+    }
+
+    private static void openBrowser(String url) throws IOException {
         if (!Desktop.isDesktopSupported() && !System.getProperty("os.name").contains("Windows")) {
             Runtime runtime = Runtime.getRuntime();
             if (System.getProperty("os.name").contains("Mac")) {
-                runtime.exec(new String[] {"xdg-open", "\"" + url + "\""});
+                runtime.exec(new String[] {"open", url});
             } else {
                 runtime.exec(new String[] {"xdg-open", url});
             }

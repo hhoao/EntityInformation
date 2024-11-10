@@ -180,6 +180,7 @@ import org.hhoa.mc.item_information.mobdictionary.capabilities.FirstLoginCapabil
 import org.hhoa.mc.item_information.mobdictionary.capabilities.IFirstLoginCapability;
 import org.hhoa.mc.item_information.mobdictionary.command.MobDictionaryCommand;
 import org.hhoa.mc.item_information.mobdictionary.data.MobDatas;
+import org.hhoa.mc.item_information.mobdictionary.network.EventType;
 import org.hhoa.mc.item_information.utils.PlayerUtils;
 
 /**
@@ -247,8 +248,7 @@ public class MobDictionaryForgeEventsHandler {
             String descriptionId = type.getDescriptionId();
             EntityManager entityManager = MobDictionary.getEntityManager();
             if (entityManager.containsName(descriptionId)) {
-                MobDatas.sendSyncDataOnClient(
-                        Collections.singleton(descriptionId), MobDatas.RequestType.PUT);
+                MobDatas.sendSyncDataOnClient(Collections.singleton(descriptionId), EventType.PUT);
             }
         }
     }

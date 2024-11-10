@@ -152,64 +152,48 @@
  * This Source Code Form is “Incompatible With Secondary Licenses”, as defined by the Mozilla Public License, v. 2.0.
  */
 
-package org.hhoa.mc.item_information.mobdictionary.messages;
+package org.hhoa.mc.item_information.framework;
 
-import java.util.Arrays;
-import java.util.IllegalFormatException;
-import net.minecraft.locale.Language;
-import net.minecraft.network.chat.TextComponent;
+import java.util.Objects;
 
-public class ChatMessage {
-    protected String text;
-    private final Convertor convertor;
+/**
+ * Box
+ *
+ * @author xianxing
+ * @since 2024/11/8
+ */
+public class Point2D {
+    private double x;
+    private double y;
 
-    public ChatMessage(String text) {
-        this(text, null);
+    public Point2D(int x, int y) {
+        this.x = x;
+        this.y = y;
     }
 
-    public ChatMessage(String text, Convertor convertor) {
-        this.text = text;
-        this.convertor = convertor;
+    public double getX() {
+        return x;
     }
 
-    public String getText() {
-        if (convertor != null) {
-            return convertor.apply(this.text);
-        } else {
-            return text;
-        }
-    }
-
-    public ChatMessage withText(Object... p_118940_) {
-        try {
-            return new ChatMessage(String.format(getText(), p_118940_));
-        } catch (IllegalFormatException illegalformatexception) {
-            return new ChatMessage("Format error: " + illegalformatexception);
-        }
-    }
-
-    public ChatMessage withTranslatableTexts(String... texts) {
-        try {
-            Object[] array =
-                    Arrays.stream(texts)
-                            .map((str) -> Language.getInstance().getOrDefault(str))
-                            .toArray();
-            return new ChatMessage(String.format(getText(), array));
-        } catch (IllegalFormatException illegalformatexception) {
-            return new ChatMessage("Format error: " + illegalformatexception);
-        }
-    }
-
-    public TextComponent getTextComponent() {
-        return new TextComponent(getText());
+    public double getY() {
+        return y;
     }
 
     @Override
     public String toString() {
-        return getText();
+        return super.toString();
     }
 
-    public interface Convertor {
-        String apply(String text);
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Point2D point2D = (Point2D) o;
+        return Double.compare(x, point2D.x) == 0 && Double.compare(y, point2D.y) == 0;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(x, y);
     }
 }

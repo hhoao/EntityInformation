@@ -161,9 +161,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.ImageButton;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.LightTexture;
@@ -173,23 +175,30 @@ import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Tuple;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraftforge.server.ServerLifecycleHooks;
 import org.hhoa.mc.item_information.EntityInformation;
+import org.hhoa.mc.item_information.ModInfo;
+import org.hhoa.mc.item_information.framework.Box2D;
 import org.hhoa.mc.item_information.mobdictionary.MobDictionary;
 import org.hhoa.mc.item_information.mobdictionary.data.MobDatas;
-import org.hhoa.mc.item_information.mobdictionary.messages.ChatMessage;
-import org.hhoa.mc.item_information.mobdictionary.messages.Messages;
+import org.hhoa.mc.item_information.mobdictionary.messages.ChatText;
+import org.hhoa.mc.item_information.mobdictionary.messages.Texts;
+import org.hhoa.mc.item_information.mobdictionary.network.Event;
+import org.hhoa.mc.item_information.mobdictionary.network.EventType;
 import org.hhoa.mc.item_information.mobdictionary.network.MobDictionaryGuiButtonClickEvent;
 import org.hhoa.mc.item_information.mobdictionary.network.PacketHandler;
 import org.hhoa.mc.item_information.utils.EntityUtils;
+import org.hhoa.mc.item_information.utils.PlayerUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class MobDictionaryGui extends Screen {
@@ -198,6 +207,8 @@ public class MobDictionaryGui extends Screen {
 
     protected int xSize = 176;
     protected int ySize = 166;
+    private int originX;
+    private int originY;
 
     protected int stringColor = 0x303030;
     protected int stringHeight;
@@ -211,7 +222,8 @@ public class MobDictionaryGui extends Screen {
 
     private Tuple<Integer, EntityType<?>>[] entityTypes;
 
-    protected LivingEntity displayEntity;
+    protected static LivingEntity displayEntity;
+    protected static LightningBolt lightningBolt;
 
     protected final float entityInitScale = 22F;
     protected final float entityMinScale = 20F;
@@ -219,24 +231,53 @@ public class MobDictionaryGui extends Screen {
     protected float entityScale = entityInitScale;
     protected double yaw = 0.0D;
     protected double yaw2 = 0.0D;
+    private float rotationX = 0;
+    private float rotationY = 0;
+    private boolean isMobDragging;
 
-    private static final List<ChatMessage> tooltipStringList =
-            Arrays.asList(Messages.OUTPUT_PIECE, Messages.NEED_A_PAPER);
+    private static final List<ChatText> tooltipStringList =
+            Arrays.asList(Texts.OUTPUT_PIECE, Texts.NEED_A_PAPER);
     private HashSet<EntityType<?>> unLockedMobTypes;
-    private ArrayList<Object> unLockedMobTypesWithId;
+    private Box2D mobBox;
+    private int currentMobStatus = 0;
+    private int currentTicks = 0;
+    private final int statusDurationSeconds = 2;
+    private final List<String> eventHandlerIds = new ArrayList<>();
 
     public MobDictionaryGui() {
-        super(Messages.DICTIONARY_NAME.getTextComponent());
+        super(Texts.DICTIONARY_NAME.getTextComponent());
     }
 
     @Override
     public void init() {
         this.stringHeight = font.lineHeight;
-        Set<String> unLockMobNamesOnClient = MobDatas.getUnLockMobNamesOnClient();
+        this.originX = (this.width - this.xSize) / 2;
+        this.originY = (this.height - this.ySize) / 2;
+        this.mobBox = new Box2D(originX + 19, originY + 12, originX + 78, originY + 82);
 
+        displayEntity = null;
+        initUnLockedMobTypes();
+
+        eventHandlerIds.add(
+                MobDictionary.getDispatcher()
+                        .registerQuestHandler(
+                                Arrays.asList(EventType.DELETE, EventType.PUT),
+                                this::processMobDictionaryGuiButtonClickEventCallBack));
+        Button convertedPaperButton = getButton(8);
+
+        lightningBolt = EntityType.LIGHTNING_BOLT.create(Minecraft.getInstance().level);
+        this.addRenderableWidget(convertedPaperButton);
+    }
+
+    private void processMobDictionaryGuiButtonClickEventCallBack(Event event) {
+        initUnLockedMobTypes();
+    }
+
+    private void initUnLockedMobTypes() {
         Set<EntityType<? extends LivingEntity>> allEntities =
                 MobDictionary.getEntityManager().getAllEntities();
         this.unLockedMobTypes = new HashSet<>();
+        Set<String> unLockMobNamesOnClient = MobDatas.getUnLockMobNamesOnClient();
         List<Tuple<Integer, EntityType<?>>> unLockedMobTypesWithId = new ArrayList<>();
         List<Tuple<Integer, EntityType<?>>> lockedMobTypesWithId = new ArrayList<>();
         int i = 1;
@@ -267,50 +308,87 @@ public class MobDictionaryGui extends Screen {
                                                 o2.getB().getDescriptionId()))
                         .toList());
         this.entityTypes = entityTypes.toArray(new Tuple[0]);
-
-        int originX = (this.width - this.xSize) / 2;
-        int originY = (this.height - this.ySize) / 2;
-
-        Button button =
-                new MobDictionaryGuiButton(
-                        originX + 19,
-                        originY + 136,
-                        "",
-                        this::buttonOnPress,
-                        this::buttonRenderToolTip);
-        button.active = this.entityTypes.length > 0;
-
-        this.addRenderableWidget(button);
     }
 
-    private void buttonOnPress(Button button) {
+    private @NotNull Button getButton(int size) {
+        Button convertedPaperButton =
+                new ImageButton(
+                        originX + 19,
+                        originY + 136,
+                        size,
+                        size,
+                        0,
+                        0,
+                        size,
+                        new ResourceLocation(ModInfo.ID, "textures/gui/button.png"),
+                        size,
+                        2 * size,
+                        this::convertedPaperButtonOnPress,
+                        this::convertedPaperRenderToolTip,
+                        new TextComponent("B"));
+        convertedPaperButton.active = this.entityTypes.length > 0;
+        return convertedPaperButton;
+    }
+
+    @Override
+    public boolean mouseDragged(
+            double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+        if (isMobDragging) {
+            rotationX += deltaX * 0.5f;
+            rotationY += deltaY * 0.5f;
+            return true;
+        }
+        return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+    }
+
+    private void convertedPaperButtonOnPress(Button button) {
         if (this.entityTypes.length > 0) {
             LocalPlayer player = Minecraft.getInstance().player;
             if (player != null) {
-                Inventory inventory = player.getInventory();
                 ItemStack paper = new ItemStack(Items.PAPER, 1);
-                if (inventory.contains(paper)) {
-                    MobDictionaryGuiButtonClickEvent mobDictionaryGuiButtonClickEvent =
-                            new MobDictionaryGuiButtonClickEvent(
-                                    this.entityTypes[this.currentNo].getB().getDescriptionId());
-                    PacketHandler.CHANNEL.sendToServer(mobDictionaryGuiButtonClickEvent);
+                ItemStack feather = new ItemStack(Items.FEATHER, 1);
+                EntityType<?> entityType = this.entityTypes[this.currentNo].getB();
+                if (MobDatas.containsMobNameOnClient(entityType.getDescriptionId())) {
+                    if (PlayerUtils.hasItemCount(player, paper)
+                            && PlayerUtils.hasItemCount(player, feather)) {
+                        MobDictionaryGuiButtonClickEvent mobDictionaryGuiButtonClickEvent =
+                                new MobDictionaryGuiButtonClickEvent(entityType.getDescriptionId());
+                        PacketHandler.CHANNEL.sendToServer(mobDictionaryGuiButtonClickEvent);
+                    } else {
+                        player.sendMessage(
+                                Texts.NOT_HAVE_ITEM
+                                        .withTranslatableTexts(
+                                                I18n.get(Items.PAPER.getDescriptionId())
+                                                        + "+"
+                                                        + I18n.get(
+                                                                Items.FEATHER.getDescriptionId()))
+                                        .getTextComponent(),
+                                player.getUUID());
+                    }
                 } else {
                     player.sendMessage(
-                            Messages.NOT_HAVE_ITEM
-                                    .withTranslatableTexts(Items.PAPER.getDescriptionId())
-                                    .getTextComponent(),
+                            Texts.UNREGISTER_NOT_EXIST.withTranslatableTexts().getTextComponent(),
                             player.getUUID());
                 }
             }
         }
     }
 
-    private void buttonRenderToolTip(Button button, PoseStack postStack, int mouseX, int mouseY) {
+    @Override
+    public void onClose() {
+        for (String eventHandlerId : eventHandlerIds) {
+            MobDictionary.getDispatcher().removeEventHandler(eventHandlerId);
+        }
+        super.onClose();
+    }
+
+    private void convertedPaperRenderToolTip(
+            Button button, PoseStack postStack, int mouseX, int mouseY) {
         int tooltipX = mouseX + 12;
         int tooltipY = mouseY - 12;
 
         int maxWidth = 0;
-        for (ChatMessage chatMessage : tooltipStringList) {
+        for (ChatText chatMessage : tooltipStringList) {
             maxWidth =
                     Math.max(Minecraft.getInstance().font.width(chatMessage.getText()), maxWidth);
         }
@@ -320,9 +398,7 @@ public class MobDictionaryGui extends Screen {
                 tooltipX - 3,
                 tooltipY - 3,
                 tooltipX + 3 + maxWidth + 10,
-                tooltipY
-                        + 8
-                        + Minecraft.getInstance().font.lineHeight * tooltipStringList.size() * 2,
+                tooltipY + 8 + Minecraft.getInstance().font.lineHeight * tooltipStringList.size(),
                 0xF0100010);
 
         for (int i = 0; i < tooltipStringList.size(); i++) {
@@ -339,6 +415,12 @@ public class MobDictionaryGui extends Screen {
     }
 
     @Override
+    public void tick() {
+        super.tick();
+        currentTicks += 1;
+    }
+
+    @Override
     public void render(@NotNull PoseStack matrixStack, int mouseX, int mouseY, float partialTicks) {
         this.yaw2 = this.yaw;
         this.drawGuiBackgroundLayer(matrixStack);
@@ -347,11 +429,12 @@ public class MobDictionaryGui extends Screen {
             initDisplayEntity(this.entityTypes[this.currentNo].getB());
         }
 
-        if (this.displayEntity != null) {
+        if (displayEntity != null) {
             drawMobModel();
-            if (isUnLock(this.displayEntity)) {
+            if (isUnLock(displayEntity)) {
                 drawUnLockMobInfo(matrixStack);
             } else {
+                // TODO 出现地点
                 drawLockMobInfo(matrixStack);
             }
         }
@@ -362,11 +445,16 @@ public class MobDictionaryGui extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
-        boolean click = super.mouseClicked(mouseX, mouseY, mouseButton);
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        isMobDragging = false;
+        return super.mouseReleased(mouseX, mouseY, button);
+    }
 
-        int originX = (this.width - this.xSize) / 2;
-        int originY = (this.height - this.ySize) / 2;
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
+        if (mouseButton == 0 && mobBox.isInBox(mouseX, mouseY)) {
+            isMobDragging = true;
+        }
         int count;
 
         for (int i = 0; i < this.entityTypes.length; i++) {
@@ -387,59 +475,70 @@ public class MobDictionaryGui extends Screen {
                             + this.topEdge
                             + (i * (this.stringHeight + this.stringYMargin) + this.stringHeight))) {
                 if (this.currentNo != count) {
-                    this.entityScale = entityInitScale;
+                    initRenderParams();
                 }
 
                 this.currentNo = count;
                 break;
             }
         }
-        return click;
+        return super.mouseClicked(mouseX, mouseY, mouseButton);
+    }
+
+    private void initRenderParams() {
+        this.entityScale = entityInitScale;
+        this.rotationX = 0;
+        this.rotationY = 0;
     }
 
     public void drawGuiBackgroundLayer(PoseStack matrixStack) {
         RenderSystem.setShaderTexture(0, dictionaryResource);
-        int k = (this.width - this.xSize) / 2;
-        int l = (this.height - this.ySize) / 2;
-        this.blit(matrixStack, k, l, 0, 0, this.xSize, this.ySize);
+        this.blit(matrixStack, originX, originY, 0, 0, this.xSize, this.ySize);
     }
 
     private void drawLockMobInfo(PoseStack matrixStack) {
-        int originX = (this.width - this.xSize) / 2;
-        int originY = (this.height - this.ySize) / 2;
-
         this.font.draw(matrixStack, "??????", originX + 19, originY + 85, this.stringColor);
     }
 
     public void drawUnLockMobInfo(PoseStack matrixStack) {
-        int originX = (this.width - this.xSize) / 2;
-        int originY = (this.height - this.ySize) / 2;
+        List<Tuple<String, String>> kvList = new ArrayList<>();
+        kvList.add(
+                new Tuple<>(
+                        I18n.get(Attributes.MAX_HEALTH.getDescriptionId()),
+                        String.format(":%.1f", displayEntity.getMaxHealth())));
+        kvList.add(
+                new Tuple<>(
+                        I18n.get(Attributes.ARMOR.getDescriptionId()),
+                        String.format(":%d", displayEntity.getArmorValue())));
+        kvList.add(
+                new Tuple<>(
+                        I18n.get(Attributes.ATTACK_DAMAGE.getDescriptionId()),
+                        String.format(
+                                ":%.1f",
+                                EntityUtils.getEntityAttribute(
+                                        displayEntity, Attributes.ATTACK_DAMAGE))));
+        kvList.add(
+                new Tuple<>(
+                        I18n.get(Attributes.MOVEMENT_SPEED.getDescriptionId()),
+                        String.format(
+                                ":%.1f",
+                                EntityUtils.getEntityAttribute(
+                                        displayEntity, Attributes.MOVEMENT_SPEED))));
 
-        this.font.draw(matrixStack, "Name:", originX + 19, originY + 85, this.stringColor);
-        this.font.draw(matrixStack, "Health:", originX + 19, originY + 106, this.stringColor);
-        if (displayEntity != null) {
-            EntityType<?> pair = this.entityTypes[this.currentNo].getB();
+        int xStart = originX + 19, yStart = originY + 85, dY = 12, currentY = yStart;
+        for (Tuple<String, String> tuple : kvList) {
+            this.font.draw(matrixStack, tuple.getA(), originX + 19, currentY, this.stringColor);
             this.font.draw(
                     matrixStack,
-                    I18n.get(pair.getDescriptionId()),
-                    originX + 19,
-                    originY + 95,
+                    tuple.getB(),
+                    xStart + font.width(tuple.getA()) + 2,
+                    currentY,
                     this.stringColor);
-            this.font.draw(
-                    matrixStack,
-                    String.format("%.1f", displayEntity.getMaxHealth()),
-                    originX + 19,
-                    originY + 116,
-                    this.stringColor);
-            int armorValue = displayEntity.getArmorValue();
-            double attackDamage =
-                    EntityUtils.getEntityAttribute(displayEntity, Attributes.ATTACK_DAMAGE);
+            currentY = dY + currentY;
         }
     }
 
     public void drawMobNames(PoseStack matrixStack, int mouseX, int mouseY) {
-        int originX = (this.width - this.xSize) / 2;
-        int originY = (this.height - this.ySize) / 2;
         String str =
                 MobDatas.getRegisteredMobCountOnClient()
                         + "/"
@@ -505,29 +604,24 @@ public class MobDictionaryGui extends Screen {
         if (unLock) {
             displayName = Language.getInstance().getOrDefault(entityType.getDescriptionId());
         } else {
-            displayName = Messages.UNKNOWN_BIOLOGY.getText() + id;
+            displayName = Texts.UNKNOWN_BIOLOGY.getText() + id;
         }
         return displayName;
     }
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
-        int originX = (this.width - this.xSize) / 2;
-        int originY = (this.height - this.ySize) / 2;
-        int minX = originX + 19, maxX = originX + 78, minY = originY + 12, maxY = originY + 82;
-        if (mouseX > minX && mouseX < maxX && mouseY > minY && mouseY < maxY) {
+        if (mobBox.isInBox(mouseX, mouseY)) {
             entityScale = (float) delta + entityScale;
             entityScale = Math.max(entityScale, entityMinScale);
             entityScale = Math.min(entityScale, entityMaxScale);
         }
+
         nameListScroll(mouseX, mouseY, delta);
         return super.mouseScrolled(mouseX, mouseX, delta);
     }
 
     private void nameListScroll(double mouseX, double mouseY, double delta) {
-        int originX = (this.width - this.xSize) / 2;
-        int originY = (this.height - this.ySize) / 2;
-
         if (this.entityTypes.length > 0) {
             if (this.entityTypes.length
                             > (this.ySize - this.bottomEdge)
@@ -563,10 +657,6 @@ public class MobDictionaryGui extends Screen {
     }
 
     protected void drawMobModel() {
-        int originX = (this.width - this.xSize) / 2;
-        int originY = (this.height - this.ySize) / 2;
-
-        // Render the entity
         EntityRenderDispatcher entityRenderDispatcher =
                 Minecraft.getInstance().getEntityRenderDispatcher();
 
@@ -575,8 +665,11 @@ public class MobDictionaryGui extends Screen {
         poseStack.translate(originX + 49, originY + 70, 0);
         poseStack.scale(scale, scale, scale);
         poseStack.mulPose(Vector3f.ZP.rotationDegrees(180F));
+        poseStack.mulPose(Vector3f.YP.rotationDegrees(-rotationX)); // X 轴旋转
+        poseStack.mulPose(Vector3f.XP.rotationDegrees(rotationY)); // Y 轴旋转
 
         int light;
+
         if (!isUnLock(displayEntity)) {
             light = LightTexture.pack(0, 0);
         } else {
@@ -603,13 +696,38 @@ public class MobDictionaryGui extends Screen {
 
     private void initDisplayEntity(EntityType<?> entityResourceLocation) {
         if (entityResourceLocation == null) {
-            this.displayEntity = null;
+            displayEntity = null;
         } else {
-            this.displayEntity = (LivingEntity) entityResourceLocation.create(this.minecraft.level);
+            if (displayEntity == null || displayEntity.getType() != entityResourceLocation) {
+                if (displayEntity != null) {
+                    displayEntity.discard();
+                }
+                displayEntity = (LivingEntity) entityResourceLocation.create(this.minecraft.level);
+            }
+            setEntityStatus();
+        }
+    }
+
+    private void setEntityStatus() {
+        if (displayEntity.getType() == EntityType.CREEPER) {
+            MobStatusEnum mobStatus = MobStatusEnum.values()[currentMobStatus];
+            if (Objects.requireNonNull(mobStatus) == MobStatusEnum.THUNDER) {
+                displayEntity.thunderHit(
+                        ServerLifecycleHooks.getCurrentServer().overworld(), lightningBolt);
+                displayEntity.heal(20);
+            }
+        }
+        if (currentTicks % 20 * statusDurationSeconds == 0) {
+            currentMobStatus = (currentMobStatus + 1) % MobStatusEnum.values().length;
         }
     }
 
     protected boolean isMouseInArea(double mouseX, double mouseY, int x1, int x2, int y1, int y2) {
         return x1 <= mouseX && mouseX < x2 && y1 <= mouseY && mouseY < y2;
+    }
+
+    enum MobStatusEnum {
+        DEFAULT,
+        THUNDER
     }
 }

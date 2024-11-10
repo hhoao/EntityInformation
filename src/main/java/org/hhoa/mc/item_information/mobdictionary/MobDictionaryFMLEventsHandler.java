@@ -178,8 +178,6 @@ public class MobDictionaryFMLEventsHandler {
     @SubscribeEvent
     public void preInit(FMLCommonSetupEvent event) {
         MobDictionary.RECIPE_SERIALIZERS.register(FMLJavaModLoadingContext.get().getModEventBus());
-        //        MobDictionary.RECIPE_SERIALIZERS.register("dictionary",
-        // ShapedRecipe.Serializer::new);
         PacketHandler.registerMessages();
     }
 
@@ -198,14 +196,6 @@ public class MobDictionaryFMLEventsHandler {
                                                 .tab(CreativeModeTab.TAB_TOOLS))
                                 .setRegistryName("data"));
     }
-
-    //    @SubscribeEvent
-    //    public void onRegisterRecipeSerializer(RegistryEvent.Register<RecipeSerializer<?>> event)
-    // {
-    //        event.getRegistry().registerAll(
-    //            new MobDictionaryRecipe.Serializer().setRegistryName("dictionary")
-    //        );
-    //    }
 
     @SubscribeEvent
     public void onGatherData(GatherDataEvent event) {

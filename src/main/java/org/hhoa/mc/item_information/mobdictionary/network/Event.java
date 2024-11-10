@@ -152,48 +152,14 @@
  * This Source Code Form is “Incompatible With Secondary Licenses”, as defined by the Mozilla Public License, v. 2.0.
  */
 
-package org.hhoa.mc.item_information.mobdictionary.recipes;
+package org.hhoa.mc.item_information.mobdictionary.network;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import java.io.IOException;
-import net.minecraft.core.NonNullList;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraft.world.item.crafting.ShapedRecipe;
-import org.hhoa.mc.item_information.mobdictionary.MobDictionary;
-import org.hhoa.mc.item_information.utils.ResourcesUtils;
-
-public class MobDictionaryRecipe extends ShapedRecipe {
-    public MobDictionaryRecipe(
-            ResourceLocation recipeId,
-            String group,
-            int width,
-            int height,
-            NonNullList<Ingredient> recipeItems,
-            ItemStack result) {
-        super(recipeId, group, width, height, recipeItems, result);
-    }
-
-    public static class MobDictionaryRecipeSerializer extends ShapedRecipe.Serializer {
-        @Override
-        public ShapedRecipe fromJson(ResourceLocation recipeId, JsonObject jsonObject) {
-            try {
-                String s = ResourcesUtils.readResourceLocationAsString(recipeId);
-                JsonElement jsonElement = jsonObject.get(s);
-                Ingredient ingredient = Ingredient.fromJson(jsonElement);
-                NonNullList<Ingredient> ingredients = NonNullList.of(ingredient);
-                return new MobDictionaryRecipe(
-                        recipeId,
-                        "tools",
-                        3,
-                        3,
-                        ingredients,
-                        new ItemStack(MobDictionary.mobDictionary, 1));
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-    }
+/**
+ * Request
+ *
+ * @author xianxing
+ * @since 2024/11/9
+ */
+public interface Event {
+    EventType getRequestType();
 }

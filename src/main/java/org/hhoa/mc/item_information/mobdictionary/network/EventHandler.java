@@ -152,29 +152,14 @@
  * This Source Code Form is “Incompatible With Secondary Licenses”, as defined by the Mozilla Public License, v. 2.0.
  */
 
-package org.hhoa.mc.item_information.mobdictionary.messages;
-
-import net.minecraft.locale.Language;
-import org.hhoa.mc.item_information.EntityInformation;
+package org.hhoa.mc.item_information.mobdictionary.network;
 
 /**
- * TranslatableMessageEnum
+ * MessageHandler
  *
  * @author xianxing
- * @since 2024/11/2
+ * @since 2024/11/9
  */
-public class TranslatableChatMessage extends ChatMessage {
-    public TranslatableChatMessage(String text) {
-        this(text, true);
-    }
-
-    public TranslatableChatMessage(String text, boolean withModId) {
-        super(
-                text,
-                (t) ->
-                        withModId
-                                ? Language.getInstance()
-                                        .getOrDefault(EntityInformation.getModRelevantText(text))
-                                : Language.getInstance().getOrDefault(t));
-    }
+public interface EventHandler {
+    void handle(Event event);
 }

@@ -152,49 +152,15 @@
  * This Source Code Form is “Incompatible With Secondary Licenses”, as defined by the Mozilla Public License, v. 2.0.
  */
 
-package org.hhoa.mc.item_information.mobdictionary.client.gui;
+package org.hhoa.mc.item_information.config;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.network.chat.TextComponent;
-import net.minecraft.resources.ResourceLocation;
-import org.hhoa.mc.item_information.ModInfo;
-import org.jetbrains.annotations.NotNull;
-
-public class MobDictionaryGuiButton extends Button {
-
-    private static final ResourceLocation buttonTexture =
-            new ResourceLocation(ModInfo.ID, "textures/gui/button.png");
-
-    public MobDictionaryGuiButton(
-            int x, int y, String buttonText, Button.OnPress onPress, Button.OnTooltip onTooltip) {
-        super(x, y, 9, 9, new TextComponent(buttonText), onPress, onTooltip);
-    }
-
-    @Override
-    public void renderButton(@NotNull PoseStack matrices, int mouseX, int mouseY, float delta) {
-        if (this.visible) {
-            super.renderButton(matrices, mouseX, mouseY, delta);
-            Minecraft mc = Minecraft.getInstance();
-            RenderSystem.setShaderTexture(0, buttonTexture); // Binding texture here
-            this.isHovered = isMouseOver(mouseX, mouseY);
-
-            int k = this.isHovered ? 1 : 0;
-
-            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-            RenderSystem.enableBlend();
-            RenderSystem.defaultBlendFunc();
-            this.blit(matrices, this.x, this.y, k * 9, 0, this.width, this.height);
-
-            int color = this.active ? (this.isHovered ? 0xFFFFFF : 0xAAAAAA) : 0x7F7F7F;
-            mc.font.draw(
-                    matrices,
-                    this.getMessage(),
-                    this.x + (float) this.width / 2 - (float) mc.font.width(this.getMessage()) / 2,
-                    this.y + (float) (this.height - 8) / 2,
-                    color);
-        }
-    }
+/**
+ * Configs
+ *
+ * @author xianxing
+ * @since 2024/11/9
+ */
+public class Configs {
+    public static boolean enableItemToolTip = true;
+    public static boolean useWiki = true;
 }

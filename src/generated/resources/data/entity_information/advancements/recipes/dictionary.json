@@ -1,0 +1,45 @@
+{
+  "advancements": [
+    {
+      "conditions": [
+        {
+          "type": "forge:true"
+        }
+      ],
+      "advancement": {
+        "parent": "minecraft:recipes/root",
+        "rewards": {
+          "recipes": [
+            "entity_information:dictionary"
+          ]
+        },
+        "criteria": {
+          "has_book": {
+            "trigger": "minecraft:inventory_changed",
+            "conditions": {
+              "items": [
+                {
+                  "items": [
+                    "minecraft:book"
+                  ]
+                }
+              ]
+            }
+          },
+          "has_the_recipe": {
+            "trigger": "minecraft:recipe_unlocked",
+            "conditions": {
+              "recipe": "entity_information:dictionary"
+            }
+          }
+        },
+        "requirements": [
+          [
+            "has_book",
+            "has_the_recipe"
+          ]
+        ]
+      }
+    }
+  ]
+}

@@ -1,6 +1,9 @@
 {
-  "key.gui.search": "MCMOD Item Search",
+  "key.gui.search": "Item Search",
   "key.open": "Open",
+  "key.itemtooltip": "Enable ItemToolTip",
+  "key.change_search_engine": "Change Search Engine(MCMOD, WIKI)",
+  "key.enable": "Enable",
 
   "entity_information.item.dictionary.name": "Mob Dictionary",
   "entity_information.item.data.name": "Piece of Dictionary",
@@ -16,13 +19,13 @@
   "entity_information.common.registered_value": "Registered",
 
   "entity_information.common.unregister_accept": "UnRegistered %s from MobDictionary !",
-  "entity_information.common.unregister_not_exist": "Not exist %s in MobDictionary !",
+  "entity_information.common.unregister_not_exist": "This creature is not registered!",
   "entity_information.common.unregister_error": "Couldn't unregister %s from MobDictionary !",
 
   "entity_information.common.not_have_item": "Not have item %s!",
 
-  "entity_information.common.output_piece": "Ouput Piece",
-  "entity_information.common.need_a_paper": "need a paper",
+  "entity_information.common.output_piece": "Convert to a single page of biological data",
+  "entity_information.common.need_a_paper": "Need a piece of paper and a feather",
 
-  "entity_information.common.unknown_biology": "Unknown Creatures"
+  "entity_information.common.unknown_biology": "Unknown"
 }

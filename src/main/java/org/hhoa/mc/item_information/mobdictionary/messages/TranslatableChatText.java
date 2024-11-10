@@ -152,13 +152,29 @@
  * This Source Code Form is “Incompatible With Secondary Licenses”, as defined by the Mozilla Public License, v. 2.0.
  */
 
-package org.hhoa.mc.item_information.mobdictionary.network.packet.syncdata;
+package org.hhoa.mc.item_information.mobdictionary.messages;
 
-import java.util.Collection;
-import org.hhoa.mc.item_information.mobdictionary.network.EventType;
+import net.minecraft.locale.Language;
+import org.hhoa.mc.item_information.EntityInformation;
 
-public class ClientSyncDataMessage extends SyncDataMessage {
-    public ClientSyncDataMessage(Collection<String> names, EventType requestType) {
-        super(names, requestType);
+/**
+ * TranslatableMessageEnum
+ *
+ * @author xianxing
+ * @since 2024/11/2
+ */
+public class TranslatableChatText extends ChatText {
+    public TranslatableChatText(String text) {
+        this(text, true);
+    }
+
+    public TranslatableChatText(String text, boolean withModId) {
+        super(
+                text,
+                (t) ->
+                        withModId
+                                ? Language.getInstance()
+                                        .getOrDefault(EntityInformation.getModRelevantText(text))
+                                : Language.getInstance().getOrDefault(t));
     }
 }

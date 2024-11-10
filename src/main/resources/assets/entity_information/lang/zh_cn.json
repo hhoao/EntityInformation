@@ -1,6 +1,8 @@
 {
-  "key.gui.search": "MC百科物品搜索",
+  "key.gui.search": "物品搜索",
+  "key.itemtooltip": "物品信息提示",
   "key.open": "打开",
+  "key.change_search_engine": "改变搜索引擎 (MCMOD, WIKI)",
 
   "item.entity_information.dictionary": "生物图鉴",
   "item.entity_information.data": "单页生物图鉴",
@@ -10,13 +12,13 @@
   "entity_information.common.register_error": "无法注册生物\"%s\" !",
   "entity_information.common.registered_value": "已注册",
 
-  "entity_information.common.unregister_accept": "\"%s\"无法注册到生物图鉴!",
-  "entity_information.common.unregister_not_exist": "\"%s\"在生物图鉴不存在!",
+  "entity_information.common.unregister_accept": "\"%s\"从生物图鉴中取消注册",
+  "entity_information.common.unregister_not_exist": "未注册该生物!",
   "entity_information.common.unregister_error": "\"%s\"无法在生物图鉴中取消注册! !",
 
   "entity_information.common.not_have_item": "没有该物品\"%s\"!",
-  "entity_information.common.output_piece": "撕下该页",
-  "entity_information.common.need_a_paper": "需要一张纸",
+  "entity_information.common.output_piece": "转换为单页生物数据",
+  "entity_information.common.need_a_paper": "需要一张纸和一根羽毛",
 
   "entity_information.common.unknown_biology": "未知生物"
 }

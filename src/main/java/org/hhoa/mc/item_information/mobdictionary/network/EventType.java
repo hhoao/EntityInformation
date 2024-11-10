@@ -152,32 +152,12 @@
  * This Source Code Form is “Incompatible With Secondary Licenses”, as defined by the Mozilla Public License, v. 2.0.
  */
 
-package org.hhoa.mc.item_information.mobdictionary.messages;
+package org.hhoa.mc.item_information.mobdictionary.network;
 
-/**
- * Messages
- *
- * @author xianxing
- * @since 2024/11/2
- */
-public class Messages {
-    public static final ChatMessage ACCEPT = new TranslatableChatMessage("common.register_accept");
-    public static final ChatMessage UNREGISTER =
-            new TranslatableChatMessage("common.unregister_accept");
-    public static final ChatMessage NOT_HAVE_ITEM =
-            new TranslatableChatMessage("common.not_have_item");
-    public static final ChatMessage ALREADY =
-            new TranslatableChatMessage("common.register_already");
-    public static final ChatMessage ERROR = new TranslatableChatMessage("common.register_error");
-    public static final ChatMessage DICTIONARY_NAME = new TranslatableChatMessage("dictionary");
-    public static final ChatMessage DICTIONARY_DATA_NAME = new TranslatableChatMessage("data");
-    public static final ChatMessage REGISTERED_VALUE =
-            new TranslatableChatMessage("common.registered_value");
-    public static final ChatMessage OUTPUT_PIECE =
-            new TranslatableChatMessage("common.output_piece");
-    public static final ChatMessage NEED_A_PAPER =
-            new TranslatableChatMessage("common.need_a_paper");
-    public static final ChatMessage NAME = new TranslatableChatMessage("common.name");
-    public static final ChatMessage UNKNOWN_BIOLOGY =
-            new TranslatableChatMessage("common.unknown_biology");
+public enum EventType {
+    PUT,
+    DELETE,
+    QUERY,
+    REGISTER,
+    MOB_DICTIONARY_GUI_BUTTON_CLICK_EVENT
 }

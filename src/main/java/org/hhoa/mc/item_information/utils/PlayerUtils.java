@@ -198,6 +198,50 @@ public class PlayerUtils {
         return player.level.addFreshEntity(itemEntity);
     }
 
+    public static void removeSingleItemFromPlayer(Player player, ItemStack itemStack) {
+        int count = itemStack.getCount();
+        Item item = itemStack.getItem();
+        removeSingleItemFromPlayer(player, item, count);
+    }
+
+    public static void removeSingleItemFromPlayer(Player player, Item item, int count) {
+        for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+            ItemStack stack = player.getInventory().getItem(i);
+            if (!stack.isEmpty() && stack.getItem() == item) {
+                int count1 = stack.getCount();
+                if (count1 > count) {
+                    stack.shrink(count);
+                } else {
+                    count -= count1;
+                    player.getInventory().setItem(i, ItemStack.EMPTY);
+                }
+                if (count == 0) {
+                    break;
+                }
+            }
+        }
+    }
+
+    public static boolean hasItemCount(Player player, ItemStack itemStack) {
+        return hasItemCount(player, itemStack.getItem(), itemStack.getCount());
+    }
+
+    public static boolean hasItemCount(Player player, Item targetItem, int requiredCount) {
+        int totalCount = 0;
+
+        for (ItemStack stack : player.getInventory().items) {
+            if (stack.getItem() == targetItem) {
+                totalCount += stack.getCount();
+
+                if (totalCount >= requiredCount) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     public static void addItemToPlayer(ItemStack itemStack, Player player) {
         if (!player.getInventory().add(itemStack)) {
             player.drop(itemStack, false);

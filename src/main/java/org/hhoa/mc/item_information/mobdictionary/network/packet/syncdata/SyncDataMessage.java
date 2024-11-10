@@ -158,14 +158,15 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import net.minecraft.network.FriendlyByteBuf;
-import org.hhoa.mc.item_information.mobdictionary.data.MobDatas;
+import org.hhoa.mc.item_information.mobdictionary.network.Event;
+import org.hhoa.mc.item_information.mobdictionary.network.EventType;
 
-public abstract class SyncDataMessage {
+public abstract class SyncDataMessage implements Event {
 
     private final Collection<String> nameList;
-    private final MobDatas.RequestType requestType;
+    private final EventType requestType;
 
-    public SyncDataMessage(Collection<String> names, MobDatas.RequestType requestType) {
+    public SyncDataMessage(Collection<String> names, EventType requestType) {
         this.nameList = names;
         this.requestType = requestType;
     }
@@ -177,7 +178,7 @@ public abstract class SyncDataMessage {
         for (int i = 0; i < length; i++) {
             mobNames.add(buf.readUtf());
         }
-        MobDatas.RequestType requestType = buf.readEnum(MobDatas.RequestType.class);
+        EventType requestType = buf.readEnum(EventType.class);
 
         if (isServer) {
             return new ServerSyncDataMessage(mobNames, requestType);
@@ -198,7 +199,8 @@ public abstract class SyncDataMessage {
         return this.nameList;
     }
 
-    public MobDatas.RequestType getRequestType() {
+    @Override
+    public EventType getRequestType() {
         return requestType;
     }
 }

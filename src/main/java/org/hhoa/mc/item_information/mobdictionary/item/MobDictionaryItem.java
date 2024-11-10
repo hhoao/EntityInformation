@@ -170,7 +170,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import org.hhoa.mc.item_information.mobdictionary.MobDictionary;
 import org.hhoa.mc.item_information.mobdictionary.client.gui.MobDictionaryGui;
 import org.hhoa.mc.item_information.mobdictionary.data.MobDatas;
-import org.hhoa.mc.item_information.mobdictionary.messages.Messages;
+import org.hhoa.mc.item_information.mobdictionary.messages.Texts;
 import org.jetbrains.annotations.NotNull;
 
 public class MobDictionaryItem extends Item {
@@ -203,7 +203,7 @@ public class MobDictionaryItem extends Item {
             List<Component> tooltip,
             @NotNull TooltipFlag flag) {
         String sb =
-                Messages.REGISTERED_VALUE.getText()
+                Texts.REGISTERED_VALUE.getText()
                         + ": "
                         + MobDatas.getRegisteredMobCountOnClient()
                         + '/'

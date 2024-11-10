@@ -172,7 +172,8 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 import org.hhoa.mc.item_information.mobdictionary.MobDictionary;
 import org.hhoa.mc.item_information.mobdictionary.data.MobDatas;
-import org.hhoa.mc.item_information.mobdictionary.messages.Messages;
+import org.hhoa.mc.item_information.mobdictionary.messages.Texts;
+import org.hhoa.mc.item_information.utils.PlayerUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class MobDataItem extends Item {
@@ -193,10 +194,10 @@ public class MobDataItem extends Item {
                 if (player instanceof ServerPlayer playerMP) {
                     if (!MobDatas.containsMobNameOnClient(name)) {
                         MobDatas.saveMobNameOnServer(playerMP, name);
-                        itemStack.shrink(1);
+                        PlayerUtils.removeSingleItemFromPlayer(player, itemStack.getItem(), 1);
                     } else {
                         player.sendMessage(
-                                Messages.ALREADY.withTranslatableTexts(name).getTextComponent(),
+                                Texts.ALREADY.withTranslatableTexts(name).getTextComponent(),
                                 player.getUUID());
                         return new InteractionResultHolder<>(InteractionResult.FAIL, itemStack);
                     }
@@ -204,8 +205,7 @@ public class MobDataItem extends Item {
             }
         } catch (Exception e) {
             player.sendMessage(
-                    Messages.ERROR.withTranslatableTexts(name).getTextComponent(),
-                    player.getUUID());
+                    Texts.ERROR.withTranslatableTexts(name).getTextComponent(), player.getUUID());
             return new InteractionResultHolder<>(InteractionResult.FAIL, itemStack);
         }
 
@@ -225,7 +225,7 @@ public class MobDataItem extends Item {
             String name = getEntityNameFromNBT(nbt);
 
             if (!name.isEmpty()) {
-                sb = new StringBuilder().append(Messages.NAME).append(":").append(I18n.get(name));
+                sb = new StringBuilder().append(Texts.NAME).append(":").append(I18n.get(name));
                 tooltip.add(new TextComponent(sb.toString()));
             }
         }

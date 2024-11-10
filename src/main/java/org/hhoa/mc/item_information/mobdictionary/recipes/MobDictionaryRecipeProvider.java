@@ -174,7 +174,6 @@ public class MobDictionaryRecipeProvider extends RecipeProvider {
 
     @Override
     protected void buildCraftingRecipes(@NotNull Consumer<FinishedRecipe> consumer) {
-        super.buildCraftingRecipes(consumer);
         ResourceLocation mobDictionaryRegistryName =
                 Objects.requireNonNull(MobDictionary.mobDictionary.getRegistryName());
 
@@ -182,10 +181,11 @@ public class MobDictionaryRecipeProvider extends RecipeProvider {
                 .addCondition(TrueCondition.INSTANCE)
                 .addRecipe(
                         ShapedRecipeBuilder.shaped(MobDictionary.mobDictionary)
-                                        .pattern("aa ")
+                                        .pattern("bs ")
                                         .pattern("   ")
                                         .pattern("   ")
-                                        .define('a', Items.BOOK)
+                                        .define('b', Items.BOOK)
+                                        .define('s', Items.SPYGLASS)
                                         .unlockedBy("has_book", has(Items.BOOK))
                                 ::save)
                 .generateAdvancement()

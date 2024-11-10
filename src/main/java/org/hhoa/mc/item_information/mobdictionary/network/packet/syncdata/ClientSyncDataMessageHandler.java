@@ -158,6 +158,7 @@ import java.util.function.Supplier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
 import org.hhoa.mc.item_information.mobdictionary.data.MobDatas;
+import org.hhoa.mc.item_information.mobdictionary.network.EventType;
 
 public class ClientSyncDataMessageHandler {
     public static void handle(SyncDataMessage message, Supplier<NetworkEvent.Context> ctx) {
@@ -165,9 +166,9 @@ public class ClientSyncDataMessageHandler {
                 .enqueueWork(
                         () -> {
                             ServerPlayer sender = ctx.get().getSender();
-                            if (message.getRequestType() == MobDatas.RequestType.DELETE) {
+                            if (message.getRequestType() == EventType.DELETE) {
                                 MobDatas.removeMobNameOnServer(sender, message.getNameList());
-                            } else if (message.getRequestType() == MobDatas.RequestType.PUT) {
+                            } else if (message.getRequestType() == EventType.PUT) {
                                 MobDatas.saveMobNamesOnServer(sender, message.getNameList());
                             }
                         });

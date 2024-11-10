@@ -165,6 +165,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.ObjectHolder;
 import net.minecraftforge.registries.RegistryObject;
 import org.hhoa.mc.item_information.ModInfo;
+import org.hhoa.mc.item_information.mobdictionary.network.Dispatcher;
 
 public class MobDictionary {
     public static MobDictionary INSTANCE;
@@ -182,6 +183,7 @@ public class MobDictionary {
 
     public static final RegistryObject<ShapedRecipe.Serializer> MY_CUSTOM_RECIPE_SERIALIZER =
             RECIPE_SERIALIZERS.register("dictionary", ShapedRecipe.Serializer::new);
+    private static Dispatcher dispatcher;
 
     public MobDictionary() {
         INSTANCE = this;
@@ -189,6 +191,11 @@ public class MobDictionary {
         modEventBus.register(new MobDictionaryFMLEventsHandler());
         MinecraftForge.EVENT_BUS.register(new MobDictionaryForgeEventsHandler());
         entityManager = new EntityManager();
+        dispatcher = new Dispatcher();
+    }
+
+    public static Dispatcher getDispatcher() {
+        return dispatcher;
     }
 
     public static EntityManager getEntityManager() {
