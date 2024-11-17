@@ -156,22 +156,22 @@ package org.hhoa.mc.item_information.mobdictionary.item;
 
 import java.util.List;
 import net.minecraft.client.Minecraft;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResultHolder;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.level.Level;
+import net.minecraft.client.util.ITooltipFlag;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.Hand;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import org.antlr.v4.runtime.misc.NotNull;
 import org.hhoa.mc.item_information.mobdictionary.MobDictionary;
 import org.hhoa.mc.item_information.mobdictionary.client.gui.MobDictionaryGui;
 import org.hhoa.mc.item_information.mobdictionary.data.MobDatas;
 import org.hhoa.mc.item_information.mobdictionary.messages.Texts;
-import org.jetbrains.annotations.NotNull;
 
 public class MobDictionaryItem extends Item {
 
@@ -180,34 +180,34 @@ public class MobDictionaryItem extends Item {
     }
 
     @Override
-    public @NotNull InteractionResultHolder<ItemStack> use(
-            Level worldIn, @NotNull Player playerIn, @NotNull InteractionHand hand) {
-        if (worldIn.isClientSide()) {
+    public @NotNull ActionResult<ItemStack> onItemRightClick(
+            World worldIn, @NotNull PlayerEntity playerIn, @NotNull Hand hand) {
+        if (!worldIn.isRemote()) {
             this.displayDictionary();
         }
 
-        return InteractionResultHolder.success(playerIn.getItemInHand(hand));
+        return ActionResult.resultSuccess(playerIn.getHeldItem(hand));
     }
 
     @OnlyIn(Dist.CLIENT)
     private void displayDictionary() {
         MobDictionaryGui guiMobDictionary = new MobDictionaryGui();
-        Minecraft.getInstance().setScreen(guiMobDictionary);
+        Minecraft.getInstance().displayGuiScreen(guiMobDictionary);
     }
 
     @OnlyIn(Dist.CLIENT)
     @Override
-    public void appendHoverText(
+    public void addInformation(
             @NotNull ItemStack stack,
-            Level world,
-            List<Component> tooltip,
-            @NotNull TooltipFlag flag) {
+            World world,
+            List<ITextComponent> tooltip,
+            @NotNull ITooltipFlag flag) {
         String sb =
                 Texts.REGISTERED_VALUE.getText()
                         + ": "
                         + MobDatas.getRegisteredMobCountOnClient()
                         + '/'
                         + MobDictionary.getEntityManager().getAllMobCount();
-        tooltip.add(new TextComponent(sb));
+        tooltip.add(new StringTextComponent(sb));
     }
 }

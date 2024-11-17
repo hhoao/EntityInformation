@@ -154,7 +154,7 @@
 
 package org.hhoa.mc.item_information.mobdictionary.network.packet.register;
 
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.PacketBuffer;
 
 public class RegisterMobMessage {
 
@@ -174,12 +174,12 @@ public class RegisterMobMessage {
         return this.mobName;
     }
 
-    public static void encode(RegisterMobMessage message, FriendlyByteBuf buffer) {
-        buffer.writeUtf(message.uuidString);
-        buffer.writeUtf(message.mobName);
+    public static void encode(RegisterMobMessage message, PacketBuffer buffer) {
+        buffer.writeString(message.uuidString);
+        buffer.writeString(message.mobName);
     }
 
-    public static RegisterMobMessage decode(FriendlyByteBuf buffer) {
-        return new RegisterMobMessage(buffer.readUtf(), buffer.readUtf());
+    public static RegisterMobMessage decode(PacketBuffer buffer) {
+        return new RegisterMobMessage(buffer.readString(), buffer.readString());
     }
 }

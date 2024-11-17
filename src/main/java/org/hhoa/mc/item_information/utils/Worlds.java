@@ -152,60 +152,19 @@
  * This Source Code Form is “Incompatible With Secondary Licenses”, as defined by the Mozilla Public License, v. 2.0.
  */
 
-package org.hhoa.mc.item_information.framework;
+package org.hhoa.mc.item_information.utils;
+
+import net.minecraft.util.RegistryKey;
+import net.minecraft.world.World;
 
 /**
- * Box
+ * Worlds
  *
  * @author xianxing
- * @since 2024/11/8
+ * @since 2024/11/17
  */
-public class Box2D {
-    private double minX;
-    private double minY;
-    private double maxY;
-    private double maxX;
-
-    public Box2D(double minX, double minY, double maxX, double maxY) {
-        this.minX = minX;
-        this.minY = minY;
-        this.maxX = maxX;
-        this.maxY = maxY;
-    }
-
-    public double getMaxX() {
-        return maxX;
-    }
-
-    public double getMaxY() {
-        return maxY;
-    }
-
-    public double getMinX() {
-        return minX;
-    }
-
-    public double getMinY() {
-        return minY;
-    }
-
-    public boolean isInBox(double x, double y) {
-        return x >= minX && x <= maxX && y >= minY && y <= maxY;
-    }
-
-    public void setMinX(double minX) {
-        this.minX = minX;
-    }
-
-    public void setMinY(double minY) {
-        this.minY = minY;
-    }
-
-    public void setMaxY(double maxY) {
-        this.maxY = maxY;
-    }
-
-    public void setMaxX(double maxX) {
-        this.maxX = maxX;
-    }
+public class Worlds {
+    public static final RegistryKey<World> overworld = World.field_234918_g_;
+    public static final RegistryKey<World> the_nether = World.field_234919_h_;
+    public static final RegistryKey<World> the_end = World.field_234920_i_;
 }

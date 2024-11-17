@@ -157,12 +157,12 @@ package org.hhoa.mc.item_information.mobdictionary.data;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.StringTag;
-import net.minecraft.nbt.Tag;
-import net.minecraft.world.level.saveddata.SavedData;
-import org.jetbrains.annotations.NotNull;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.INBT;
+import net.minecraft.nbt.ListNBT;
+import net.minecraft.nbt.StringNBT;
+import net.minecraft.world.storage.WorldSavedData;
+import org.antlr.v4.runtime.misc.NotNull;
 
 /**
  * MobData
@@ -170,32 +170,37 @@ import org.jetbrains.annotations.NotNull;
  * @author xianxing
  * @since 2024/10/29
  */
-public class MobSavedData extends SavedData {
-    private final Set<String> mobNameSet = new HashSet<>();
+public class MobSavedData extends WorldSavedData {
+    private Set<String> mobNameSet = new HashSet<>();
+
+    public MobSavedData() {
+        super("mob_data");
+    }
 
     @Override
-    public @NotNull CompoundTag save(@NotNull CompoundTag compoundTag) {
-        ListTag tags = new ListTag();
+    public @NotNull CompoundNBT write(@NotNull CompoundNBT compoundTag) {
+        ListNBT tags = new ListNBT();
 
         for (String name : mobNameSet) {
-            StringTag nameTag = StringTag.valueOf(name);
+            StringNBT nameTag = StringNBT.valueOf(name);
             tags.add(nameTag);
         }
         compoundTag.put("mob_data", tags);
         return compoundTag;
     }
 
-    public static MobSavedData load(CompoundTag tag) {
-        ListTag mobData = (ListTag) tag.get("mob_data");
+    @Override
+    public void read(CompoundNBT tag) {
+        ListNBT mobData = (ListNBT) tag.get("mob_data");
 
         MobSavedData mobSavedData = new MobSavedData();
         if (mobData != null) {
             Set<String> mobNameList = mobSavedData.getMobNameSet();
-            for (Tag mobDatum : mobData) {
-                mobNameList.add(mobDatum.getAsString());
+            for (INBT mobDatum : mobData) {
+                mobNameList.add(mobDatum.getString());
             }
+            this.mobNameSet = mobNameList;
         }
-        return mobSavedData;
     }
 
     public Set<String> getMobNameSet() {

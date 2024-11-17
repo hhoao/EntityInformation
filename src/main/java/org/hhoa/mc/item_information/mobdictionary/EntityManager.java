@@ -158,29 +158,30 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.MobEntity;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.Mob;
+import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.registries.ForgeRegistries;
+import org.hhoa.mc.item_information.utils.Worlds;
 
 public class EntityManager {
     private final TreeSet<EntityType<? extends LivingEntity>> entityTypes =
-            new TreeSet<>(Comparator.comparing(EntityType::getDescriptionId));
+            new TreeSet<>(Comparator.comparing(EntityType::getTranslationKey));
 
     public Set<EntityType<? extends LivingEntity>> getEntityTypes() {
         return entityTypes;
     }
 
     public String[] getEntityNames() {
-        return entityTypes.stream().map((EntityType::getDescriptionId)).toArray(String[]::new);
+        return entityTypes.stream().map((EntityType::getTranslationKey)).toArray(String[]::new);
     }
 
     public EntityType<?> getEntityByName(String name) {
         return entityTypes.stream()
-                .filter(entityType -> entityType.getDescriptionId().endsWith(name))
+                .filter(entityType -> entityType.getTranslationKey().endsWith(name))
                 .findAny()
                 .orElse(null);
     }
@@ -191,7 +192,7 @@ public class EntityManager {
 
     public boolean containsName(String name) {
         return entityTypes.stream()
-                .anyMatch(entityType -> entityType.getDescriptionId().endsWith(name));
+                .anyMatch(entityType -> entityType.getTranslationKey().endsWith(name));
     }
 
     public int getAllMobCount() {
@@ -205,18 +206,14 @@ public class EntityManager {
     }
 
     public void loadAllMob(MinecraftServer server) {
-        ServerLevel overworld = server.overworld();
-        Iterable<Entity> allEntities = server.overworld().getAllEntities();
-        for (Entity allEntity : allEntities) {
-            System.out.println(allEntity);
-        }
+        ServerWorld overworld = server.getWorld(Worlds.overworld);
         for (EntityType<?> entity : ForgeRegistries.ENTITIES) {
             Entity o = entity.create(overworld);
-            if (o instanceof Mob) {
+            if (o instanceof MobEntity) {
                 entityTypes.add((EntityType<? extends LivingEntity>) o.getType());
             }
             if (o != null) {
-                o.discard();
+                o.remove();
             }
         }
     }

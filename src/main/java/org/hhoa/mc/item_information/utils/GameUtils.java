@@ -154,7 +154,7 @@
 
 package org.hhoa.mc.item_information.utils;
 
-import net.minecraftforge.fml.util.thread.SidedThreadGroups;
+import net.minecraftforge.fml.common.thread.SidedThreadGroups;
 
 /**
  * ClientUtils

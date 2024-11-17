@@ -154,9 +154,9 @@
 
 package org.hhoa.mc.item_information.utils;
 
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.ai.attributes.Attribute;
-import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.ai.attributes.Attribute;
+import net.minecraft.entity.ai.attributes.ModifiableAttributeInstance;
 
 /**
  * EntityUtils
@@ -166,7 +166,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeInstance;
  */
 public class EntityUtils {
     public static double getEntityAttribute(LivingEntity entity, Attribute attribute) {
-        AttributeInstance attributeInstance = entity.getAttribute(attribute);
+        ModifiableAttributeInstance attributeInstance = entity.getAttribute(attribute);
 
         if (attributeInstance != null) {
             return attributeInstance.getValue();

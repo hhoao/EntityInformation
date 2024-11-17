@@ -163,10 +163,10 @@ import com.mojang.brigadier.suggestion.Suggestion;
 import com.mojang.brigadier.suggestion.Suggestions;
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
-import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.Commands;
-import net.minecraft.network.chat.TextComponent;
-import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.command.CommandSource;
+import net.minecraft.command.Commands;
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.util.text.StringTextComponent;
 import org.apache.logging.log4j.Logger;
 import org.hhoa.mc.item_information.mobdictionary.data.MobDatas;
 import org.hhoa.mc.item_information.utils.LoggerUtils;
@@ -174,21 +174,20 @@ import org.hhoa.mc.item_information.utils.LoggerUtils;
 public class MobDictionaryCommand {
     private static final Logger LOG = LoggerUtils.getLogger(MobDictionaryCommand.class);
 
-    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        LiteralArgumentBuilder<CommandSourceStack> builder =
+    public static void register(CommandDispatcher<CommandSource> dispatcher) {
+        LiteralArgumentBuilder<CommandSource> builder =
                 Commands.literal("mobdictionary")
                         .then(
                                 Commands.argument("init", StringArgumentType.word())
                                         .executes(
                                                 context -> {
                                                     try {
-                                                        ServerPlayer serverPlayer =
-                                                                context.getSource()
-                                                                        .getPlayerOrException();
+                                                        ServerPlayerEntity serverPlayer =
+                                                                context.getSource().asPlayer();
                                                         MobDatas.clearMobNameOnServer(serverPlayer);
                                                         context.getSource()
-                                                                .sendSuccess(
-                                                                        new TextComponent(
+                                                                .sendFeedback(
+                                                                        new StringTextComponent(
                                                                                 "Init Dictionary successful!"),
                                                                         true);
                                                     } catch (Exception e) {
@@ -218,10 +217,10 @@ public class MobDictionaryCommand {
                                                                         MobDatas
                                                                                 .unlockAllMobNameOnServer(
                                                                                         context.getSource()
-                                                                                                .getPlayerOrException());
+                                                                                                .asPlayer());
                                                                         context.getSource()
-                                                                                .sendSuccess(
-                                                                                        new TextComponent(
+                                                                                .sendFeedback(
+                                                                                        new StringTextComponent(
                                                                                                 "Unlock all successful"),
                                                                                         true);
                                                                     } catch (Exception e) {

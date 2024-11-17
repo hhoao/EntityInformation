@@ -156,25 +156,22 @@ package org.hhoa.mc.item_information.mobdictionary;
 
 import com.mojang.brigadier.CommandDispatcher;
 import java.util.Collections;
-import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.command.CommandSource;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.CapabilityManager;
-import net.minecraftforge.common.capabilities.CapabilityToken;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
-import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 import org.hhoa.mc.item_information.EntityInformation;
 import org.hhoa.mc.item_information.mobdictionary.capabilities.FirstLoginCapabilityProvider;
 import org.hhoa.mc.item_information.mobdictionary.capabilities.IFirstLoginCapability;
@@ -190,18 +187,16 @@ import org.hhoa.mc.item_information.utils.PlayerUtils;
  * @since 2024/10/28
  */
 public class MobDictionaryForgeEventsHandler {
-    public static final Capability<IFirstLoginCapability> FIRST_LOGIN_CAPABILITY =
-            CapabilityManager.get(new CapabilityToken<>() {});
     public static final ResourceLocation FIRST_LOGIN_CAP =
             EntityInformation.location("first_login");
 
     @SubscribeEvent
     public void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
-        Player player = event.getPlayer();
-        if (player instanceof ServerPlayer serverPlayer) {
+        PlayerEntity player = event.getPlayer();
+        if (player instanceof ServerPlayerEntity serverPlayer) {
             MobDatas.loadMobDataOnServer(serverPlayer);
             LazyOptional<IFirstLoginCapability> capability =
-                    player.getCapability(MobDictionaryForgeEventsHandler.FIRST_LOGIN_CAPABILITY);
+                    player.getCapability(MobDictionary.firstLoginCapability);
 
             capability.ifPresent(
                     cap -> {
@@ -217,15 +212,15 @@ public class MobDictionaryForgeEventsHandler {
 
     @SubscribeEvent
     public void attachCapability(AttachCapabilitiesEvent<Entity> event) {
-        if (event.getObject() instanceof ServerPlayer) {
+        if (event.getObject() instanceof ServerPlayerEntity) {
             event.addCapability(FIRST_LOGIN_CAP, new FirstLoginCapabilityProvider());
         }
     }
 
     @SubscribeEvent
-    public void onServerStart(ServerStartingEvent event) {
+    public void onServerStart(FMLServerStartingEvent event) {
         MinecraftServer server = event.getServer();
-        CommandDispatcher<CommandSourceStack> dispatcher = server.getCommands().getDispatcher();
+        CommandDispatcher<CommandSource> dispatcher = server.getCommandManager().getDispatcher();
         MobDictionaryCommand.register(dispatcher);
         MobDictionary.getEntityManager().loadAllMob(event.getServer());
     }
@@ -245,7 +240,7 @@ public class MobDictionaryForgeEventsHandler {
     private static void unLockMobData(Entity entityLiving) {
         if (entityLiving != null) {
             EntityType<?> type = entityLiving.getType();
-            String descriptionId = type.getDescriptionId();
+            String descriptionId = type.getTranslationKey();
             EntityManager entityManager = MobDictionary.getEntityManager();
             if (entityManager.containsName(descriptionId)) {
                 MobDatas.sendSyncDataOnClient(Collections.singleton(descriptionId), EventType.PUT);

@@ -172,17 +172,18 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.resources.language.I18n;
-import net.minecraft.client.resources.language.LanguageManager;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.resources.Resource;
-import net.minecraft.world.inventory.Slot;
-import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.client.event.ScreenEvent;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screen.inventory.ContainerScreen;
+import net.minecraft.client.resources.I18n;
+import net.minecraft.client.resources.LanguageManager;
+import net.minecraft.inventory.container.Slot;
+import net.minecraft.item.ItemStack;
+import net.minecraft.resources.IResource;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.util.text.TextComponent;
+import net.minecraftforge.client.event.GuiScreenEvent;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -196,18 +197,18 @@ import org.hhoa.mc.item_information.utils.LoggerUtils;
 
 public class ItemTooltipForgeEventsHandler {
     private static final Logger LOG = LoggerUtils.getLogger(ItemTooltipForgeEventsHandler.class);
-    private static final Cache<ResourceLocation, Set<Component>> itemCache =
+    private static final Cache<ResourceLocation, Set<ITextComponent>> itemCache =
             CacheBuilder.newBuilder().maximumSize(64).build();
     public static final Gson gson = new Gson();
 
     @SubscribeEvent
-    public static void onItemTooltip(ItemTooltipEvent event) throws IOException {
+    public static void onItemTooltip(ItemTooltipEvent event) {
         if (Configs.enableItemToolTip) {
             ResourceLocation registryName = event.getItemStack().getItem().getRegistryName();
-            List<Component> toolTip = event.getToolTip();
+            List<ITextComponent> toolTip = event.getToolTip();
             if (registryName != null) {
                 String name = toolTip.get(0).getString();
-                Set<Component> itemInfoComponents = null;
+                Set<ITextComponent> itemInfoComponents = null;
                 String resourcePath =
                         String.format(
                                 "item_infos/%s/%s.json",
@@ -222,7 +223,7 @@ public class ItemTooltipForgeEventsHandler {
                                         if (Minecraft.getInstance()
                                                 .getResourceManager()
                                                 .hasResource(itemInfoResourceLocation)) {
-                                            Resource resource =
+                                            IResource resource =
                                                     Minecraft.getInstance()
                                                             .getResourceManager()
                                                             .getResource(itemInfoResourceLocation);
@@ -233,7 +234,8 @@ public class ItemTooltipForgeEventsHandler {
                                                             StandardCharsets.UTF_8);
                                             ItemInfo itemInfo = gson.fromJson(json, ItemInfo.class);
                                             Map<String, Set<String>> infos = itemInfo.getInfos();
-                                            Set<Component> descComponent = new HashSet<>();
+                                            Set<ITextComponent> descComponent = new HashSet<>();
+
                                             descComponent.add(
                                                     getDescComponent(infos.get("简介"), name));
                                             descComponent.add(getUseComponent(infos.get("用途")));
@@ -248,8 +250,8 @@ public class ItemTooltipForgeEventsHandler {
                 } catch (Exception ignored) {
                 }
                 if (itemInfoComponents != null) {
-                    Component nameComponent = toolTip.remove(0);
-                    ArrayList<Component> components = new ArrayList<>(toolTip);
+                    ITextComponent nameComponent = toolTip.remove(0);
+                    ArrayList<ITextComponent> components = new ArrayList<>(toolTip);
                     toolTip.clear();
                     toolTip.add(nameComponent);
                     toolTip.addAll(components);
@@ -263,7 +265,7 @@ public class ItemTooltipForgeEventsHandler {
         if (generates != null) {
             String[] array = generates.toArray(String[]::new);
             String str = String.join(",", array);
-            return new TextComponent("生成: " + str);
+            return new StringTextComponent("生成: " + str);
         }
         return null;
     }
@@ -272,7 +274,7 @@ public class ItemTooltipForgeEventsHandler {
         if (get != null) {
             String[] array = get.toArray(String[]::new);
             String str = String.join(",", array);
-            return new TextComponent("获取途径: " + str);
+            return new StringTextComponent("获取途径: " + str);
         }
         return null;
     }
@@ -281,7 +283,7 @@ public class ItemTooltipForgeEventsHandler {
         if (usages != null) {
             String[] array = usages.toArray(String[]::new);
             String descStr = String.join(",", array);
-            return new TextComponent("用途: " + descStr);
+            return new StringTextComponent("用途: " + descStr);
         }
         return null;
     }
@@ -310,37 +312,37 @@ public class ItemTooltipForgeEventsHandler {
                 String[] array = descriptions.toArray(String[]::new);
                 singleDesc = String.join("\n", array);
             }
-            return new TextComponent(singleDesc);
+            return new StringTextComponent(singleDesc);
         }
         return null;
     }
 
     @SubscribeEvent
     public static void onKeyboardKeyPressedEventPost(
-            ScreenEvent.KeyboardKeyPressedEvent.Post event) {
-        Screen screen = event.getScreen();
+            GuiScreenEvent.KeyboardKeyPressedEvent.Post event) {
+        Screen screen = event.getGui();
         try {
-            if (screen instanceof AbstractContainerScreen) {
+            if (screen instanceof ContainerScreen) {
                 if (ItemTooltipKeyMappingRegistry.searchKeyMapping != null
                         && event.getKeyCode()
                                 == ItemTooltipKeyMappingRegistry.searchKeyMapping
                                         .getKey()
-                                        .getValue()) {
-                    Slot slotUnderMouse = ((AbstractContainerScreen<?>) screen).getSlotUnderMouse();
+                                        .getKeyCode()) {
+                    Slot slotUnderMouse = ((ContainerScreen<?>) screen).getSlotUnderMouse();
                     if (slotUnderMouse != null) {
-                        openItemSearchWeb(slotUnderMouse.getItem());
+                        openItemSearchWeb(slotUnderMouse.getStack());
                     }
                 } else if (ItemTooltipKeyMappingRegistry.enableItemTooltipKeyMapping != null
                         && event.getKeyCode()
                                 == ItemTooltipKeyMappingRegistry.enableItemTooltipKeyMapping
                                         .getKey()
-                                        .getValue()) {
+                                        .getKeyCode()) {
                     Configs.enableItemToolTip = !Configs.enableItemToolTip;
                 } else if (ItemTooltipKeyMappingRegistry.changeSearchEngine != null
                         && event.getKeyCode()
                                 == ItemTooltipKeyMappingRegistry.changeSearchEngine
                                         .getKey()
-                                        .getValue()) {
+                                        .getKeyCode()) {
                     Configs.useWiki = !Configs.useWiki;
                 }
             }
@@ -351,8 +353,8 @@ public class ItemTooltipForgeEventsHandler {
 
     public static void openItemSearchWebOnWiki(ItemStack stack) throws IOException {
         LanguageManager languageManager = Minecraft.getInstance().getLanguageManager();
-        String name = languageManager.getSelected().getCode().split("_")[0];
-        String itemName = I18n.get(stack.getDescriptionId()).replace(" ", "_");
+        String name = languageManager.getCurrentLanguage().getCode().split("_")[0];
+        String itemName = I18n.format(stack.getTranslationKey()).replace(" ", "_");
         String apiUrl = String.format("https://%s.minecraft.wiki/w/%s", name, itemName);
         openBrowser(apiUrl);
     }

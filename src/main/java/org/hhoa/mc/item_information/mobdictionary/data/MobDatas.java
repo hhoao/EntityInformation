@@ -164,17 +164,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.EntityType;
-import net.minecraftforge.network.NetworkDirection;
+import net.minecraft.world.server.ServerWorld;
+import net.minecraft.world.storage.DimensionSavedDataManager;
+import net.minecraftforge.fml.network.NetworkDirection;
 import org.hhoa.mc.item_information.mobdictionary.MobDictionary;
 import org.hhoa.mc.item_information.mobdictionary.network.EventType;
 import org.hhoa.mc.item_information.mobdictionary.network.PacketHandler;
 import org.hhoa.mc.item_information.mobdictionary.network.packet.syncdata.ClientSyncDataMessage;
 import org.hhoa.mc.item_information.mobdictionary.network.packet.syncdata.ServerSyncDataMessage;
 import org.hhoa.mc.item_information.mobdictionary.network.packet.syncdata.SyncDataMessage;
+import org.hhoa.mc.item_information.utils.Worlds;
 
 public final class MobDatas {
     private static final Set<String> clientMobNameSet = new HashSet<>();
@@ -184,7 +186,7 @@ public final class MobDatas {
         return clientMobNameSet.contains(entityName);
     }
 
-    public static boolean containsMobNameOnServer(String name, ServerPlayer player) {
+    public static boolean containsMobNameOnServer(String name, ServerPlayerEntity player) {
         MobSavedData mobSavedData = getMobSavedData(player);
         return mobSavedData.containsMobName(name);
     }
@@ -201,58 +203,60 @@ public final class MobDatas {
         return "mob_data" + playerUUID;
     }
 
-    public static void loadMobDataOnServer(ServerPlayer player) {
+    public static void loadMobDataOnServer(ServerPlayerEntity player) {
         MobSavedData mobSavedData = getMobSavedData(player);
         Set<String> mobNameList = mobSavedData.getMobNameSet();
 
         sendSyncDataMessageOnServer(player, mobNameList, EventType.REGISTER);
     }
 
-    public static void saveMobNameOnServer(ServerPlayer player, String mobName) throws IOException {
+    public static void saveMobNameOnServer(ServerPlayerEntity player, String mobName)
+            throws IOException {
         MobSavedData mobSavedData = getMobSavedData(player);
         mobSavedData.addMobName(mobName);
 
         sendSyncDataMessageOnServer(player, Collections.singleton(mobName), EventType.PUT);
     }
 
-    public static void saveMobNamesOnServer(ServerPlayer sender, Collection<String> mobNames) {
+    public static void saveMobNamesOnServer(
+            ServerPlayerEntity sender, Collection<String> mobNames) {
         MobSavedData mobSavedData = getMobSavedData(sender);
         mobSavedData.addMobNames(mobNames);
 
         sendSyncDataMessageOnServer(sender, mobNames, EventType.PUT);
     }
 
-    public static void removeMobNameOnServer(ServerPlayer player, String mobName) {
+    public static void removeMobNameOnServer(ServerPlayerEntity player, String mobName) {
         MobSavedData mobSavedData = getMobSavedData(player);
         mobSavedData.removeMobName(mobName);
 
         sendSyncDataMessageOnServer(player, Collections.singleton(mobName), EventType.DELETE);
     }
 
-    public static void removeMobNameOnServer(ServerPlayer player, Collection<String> mobNames) {
+    public static void removeMobNameOnServer(
+            ServerPlayerEntity player, Collection<String> mobNames) {
         MobSavedData mobSavedData = getMobSavedData(player);
         mobSavedData.removeMobNames(mobNames);
 
         sendSyncDataMessageOnServer(player, mobNames, EventType.DELETE);
     }
 
-    private static MobSavedData getMobSavedData(ServerPlayer serverPlayer) {
-        UUID playerUuid = serverPlayer.getUUID();
+    private static MobSavedData getMobSavedData(ServerPlayerEntity ServerPlayerEntity) {
+        UUID playerUuid = ServerPlayerEntity.getUniqueID();
 
         MobSavedData mobSavedData;
         if (serverMobNameListMap.containsKey(playerUuid)) {
             mobSavedData = serverMobNameListMap.get(playerUuid);
         } else {
-            MinecraftServer server = serverPlayer.getServer();
+            MinecraftServer server = ServerPlayerEntity.getServer();
             if (server != null) {
-                ServerLevel overworld = server.overworld();
+                ServerWorld overworld = server.getWorld(Worlds.overworld);
+                DimensionSavedDataManager savedData = overworld.getChunkProvider().getSavedData();
                 mobSavedData =
                         overworld
-                                .getDataStorage()
-                                .computeIfAbsent(
-                                        MobSavedData::load,
-                                        MobSavedData::new,
-                                        getMobSavedDataName(playerUuid));
+                                .getChunkProvider()
+                                .getSavedData()
+                                .get(MobSavedData::new, getMobSavedDataName(playerUuid));
                 serverMobNameListMap.put(playerUuid, mobSavedData);
             } else {
                 throw new RuntimeException();
@@ -261,18 +265,18 @@ public final class MobDatas {
         return mobSavedData;
     }
 
-    public static void clearMobNameOnServer(ServerPlayer serverPlayer) {
-        MobSavedData mobSavedData = getMobSavedData(serverPlayer);
+    public static void clearMobNameOnServer(ServerPlayerEntity ServerPlayerEntity) {
+        MobSavedData mobSavedData = getMobSavedData(ServerPlayerEntity);
         HashSet<String> mobNames = mobSavedData.clearMobNames();
-        sendSyncDataMessageOnServer(serverPlayer, mobNames, EventType.DELETE);
+        sendSyncDataMessageOnServer(ServerPlayerEntity, mobNames, EventType.DELETE);
     }
 
-    public static void unlockAllMobNameOnServer(ServerPlayer serverPlayer) {
+    public static void unlockAllMobNameOnServer(ServerPlayerEntity ServerPlayerEntity) {
         List<String> list =
                 MobDictionary.getEntityManager().getEntityTypes().stream()
-                        .map(EntityType::getDescriptionId)
+                        .map(EntityType::getTranslationKey)
                         .toList();
-        saveMobNamesOnServer(serverPlayer, list);
+        saveMobNamesOnServer(ServerPlayerEntity, list);
     }
 
     public static void sendSyncDataOnClient(Collection<String> names, EventType requestType) {
@@ -281,11 +285,13 @@ public final class MobDatas {
     }
 
     public static void sendSyncDataMessageOnServer(
-            ServerPlayer serverPlayer, Collection<String> names, EventType requestType) {
+            ServerPlayerEntity ServerPlayerEntity,
+            Collection<String> names,
+            EventType requestType) {
         SyncDataMessage syncDataMessage = new ServerSyncDataMessage(names, requestType);
         PacketHandler.CHANNEL.sendTo(
                 syncDataMessage,
-                serverPlayer.connection.getConnection(),
+                ServerPlayerEntity.connection.netManager,
                 NetworkDirection.PLAY_TO_CLIENT);
     }
 

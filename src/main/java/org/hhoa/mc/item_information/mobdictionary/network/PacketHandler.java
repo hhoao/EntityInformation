@@ -156,9 +156,9 @@ package org.hhoa.mc.item_information.mobdictionary.network;
 
 import static org.hhoa.mc.item_information.EntityInformation.location;
 
-import net.minecraftforge.network.NetworkDirection;
-import net.minecraftforge.network.NetworkRegistry;
-import net.minecraftforge.network.simple.SimpleChannel;
+import net.minecraftforge.fml.network.NetworkDirection;
+import net.minecraftforge.fml.network.NetworkRegistry;
+import net.minecraftforge.fml.network.simple.SimpleChannel;
 import org.hhoa.mc.item_information.mobdictionary.network.packet.register.RegisterMobMessage;
 import org.hhoa.mc.item_information.mobdictionary.network.packet.register.RegisterMobMessageHandler;
 import org.hhoa.mc.item_information.mobdictionary.network.packet.syncdata.ClientSyncDataMessage;

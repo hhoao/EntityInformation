@@ -155,26 +155,26 @@
 package org.hhoa.mc.item_information.mobdictionary.item;
 
 import java.util.List;
-import net.minecraft.client.resources.language.I18n;
-import net.minecraft.core.NonNullList;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
-import net.minecraft.world.InteractionResultHolder;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.level.Level;
+import net.minecraft.client.resources.I18n;
+import net.minecraft.client.util.ITooltipFlag;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemGroup;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.ActionResultType;
+import net.minecraft.util.Hand;
+import net.minecraft.util.NonNullList;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.world.World;
+import org.antlr.v4.runtime.misc.NotNull;
 import org.hhoa.mc.item_information.mobdictionary.MobDictionary;
 import org.hhoa.mc.item_information.mobdictionary.data.MobDatas;
 import org.hhoa.mc.item_information.mobdictionary.messages.Texts;
 import org.hhoa.mc.item_information.utils.PlayerUtils;
-import org.jetbrains.annotations.NotNull;
 
 public class MobDataItem extends Item {
     public MobDataItem(Properties properties) {
@@ -182,71 +182,71 @@ public class MobDataItem extends Item {
     }
 
     @Override
-    public @NotNull InteractionResultHolder<ItemStack> use(
-            @NotNull Level world, Player player, @NotNull InteractionHand hand) {
-        ItemStack itemStack = player.getItemInHand(hand);
-        CompoundTag nbt = itemStack.getTag();
+    public @NotNull ActionResult<ItemStack> onItemRightClick(
+            @NotNull World world, PlayerEntity player, @NotNull Hand hand) {
+        ItemStack itemStack = player.getHeldItem(hand);
+        CompoundNBT nbt = itemStack.getTag();
 
         String name = "";
         try {
             if (nbt != null) {
                 name = getEntityNameFromNBT(nbt);
-                if (player instanceof ServerPlayer playerMP) {
+                if (player instanceof ServerPlayerEntity playerMP) {
                     if (!MobDatas.containsMobNameOnClient(name)) {
                         MobDatas.saveMobNameOnServer(playerMP, name);
                         PlayerUtils.removeSingleItemFromPlayer(player, itemStack.getItem(), 1);
                     } else {
                         player.sendMessage(
                                 Texts.ALREADY.withTranslatableTexts(name).getTextComponent(),
-                                player.getUUID());
-                        return new InteractionResultHolder<>(InteractionResult.FAIL, itemStack);
+                                player.getUniqueID());
+                        return new ActionResult<>(ActionResultType.FAIL, itemStack);
                     }
                 }
             }
         } catch (Exception e) {
             player.sendMessage(
-                    Texts.ERROR.withTranslatableTexts(name).getTextComponent(), player.getUUID());
-            return new InteractionResultHolder<>(InteractionResult.FAIL, itemStack);
+                    Texts.ERROR.withTranslatableTexts(name).getTextComponent(),
+                    player.getUniqueID());
+            return new ActionResult<>(ActionResultType.FAIL, itemStack);
         }
 
-        return new InteractionResultHolder<>(InteractionResult.SUCCESS, itemStack);
+        return new ActionResult<>(ActionResultType.SUCCESS, itemStack);
     }
 
     @Override
-    public void appendHoverText(
+    public void addInformation(
             ItemStack stack,
-            Level world,
-            @NotNull List<Component> tooltip,
-            @NotNull TooltipFlag flag) {
-        CompoundTag nbt = stack.getTag();
+            World world,
+            @NotNull List<ITextComponent> tooltip,
+            @NotNull ITooltipFlag flag) {
+        CompoundNBT nbt = stack.getTag();
         StringBuilder sb;
 
         if (nbt != null) {
             String name = getEntityNameFromNBT(nbt);
 
             if (!name.isEmpty()) {
-                sb = new StringBuilder().append(Texts.NAME).append(":").append(I18n.get(name));
-                tooltip.add(new TextComponent(sb.toString()));
+                sb = new StringBuilder().append(Texts.NAME).append(":").append(I18n.format(name));
+                tooltip.add(new StringTextComponent(sb.toString()));
             }
         }
     }
 
-    public static String getEntityNameFromNBT(CompoundTag nbt) {
+    public static String getEntityNameFromNBT(CompoundNBT nbt) {
         return nbt.getString("Name");
     }
 
-    public static void setEntityNameToNBT(String name, CompoundTag nbt) {
+    public static void setEntityNameToNBT(String name, CompoundNBT nbt) {
         nbt.putString("Name", name);
     }
 
     @Override
-    public void fillItemCategory(
-            @NotNull CreativeModeTab tab, @NotNull NonNullList<ItemStack> items) {
-        if (this.allowdedIn(tab)) {
+    public void fillItemGroup(@NotNull ItemGroup tab, @NotNull NonNullList<ItemStack> items) {
+        if (this.isInGroup(tab)) {
             for (String name : MobDictionary.getEntityManager().getEntityNames()) {
                 if (MobDictionary.getEntityManager().containsName(name)) {
                     ItemStack item = new ItemStack(this);
-                    CompoundTag nbt = new CompoundTag();
+                    CompoundNBT nbt = new CompoundNBT();
                     setEntityNameToNBT(name, nbt);
                     item.setTag(nbt);
                     items.add(item);

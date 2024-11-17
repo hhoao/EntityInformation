@@ -156,12 +156,12 @@ package org.hhoa.mc.item_information.mobdictionary.network;
 
 import java.util.Collections;
 import java.util.function.Supplier;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.network.PacketBuffer;
+import net.minecraftforge.fml.network.NetworkEvent;
 import org.hhoa.mc.item_information.mobdictionary.MobDictionary;
 import org.hhoa.mc.item_information.mobdictionary.data.MobDatas;
 import org.hhoa.mc.item_information.mobdictionary.item.MobDataItem;
@@ -189,13 +189,13 @@ public class MobDictionaryGuiButtonClickEvent implements Event {
         return EventType.MOB_DICTIONARY_GUI_BUTTON_CLICK_EVENT;
     }
 
-    public static MobDictionaryGuiButtonClickEvent decode(FriendlyByteBuf buf) {
-        String mobName = buf.readUtf();
+    public static MobDictionaryGuiButtonClickEvent decode(PacketBuffer buf) {
+        String mobName = buf.readString();
         return new MobDictionaryGuiButtonClickEvent(mobName);
     }
 
-    public static void encode(MobDictionaryGuiButtonClickEvent msg, FriendlyByteBuf buf) {
-        buf.writeUtf(msg.currentMobName);
+    public static void encode(MobDictionaryGuiButtonClickEvent msg, PacketBuffer buf) {
+        buf.writeString(msg.currentMobName);
     }
 
     public static void handle(
@@ -203,7 +203,7 @@ public class MobDictionaryGuiButtonClickEvent implements Event {
         ctx.get()
                 .enqueueWork(
                         () -> {
-                            ServerPlayer player = ctx.get().getSender();
+                            ServerPlayerEntity player = ctx.get().getSender();
                             String mobName = message.getCurrentMobName();
                             if (player != null
                                     && MobDatas.containsMobNameOnServer(mobName, player)) {
@@ -215,9 +215,9 @@ public class MobDictionaryGuiButtonClickEvent implements Event {
                                         && PlayerUtils.hasItemCount(player, feather)) {
                                     PlayerUtils.removeSingleItemFromPlayer(player, paper);
                                     PlayerUtils.removeSingleItemFromPlayer(player, feather);
-                                    CompoundTag tag =
+                                    CompoundNBT tag =
                                             mobDataItemStack.getTag() == null
-                                                    ? new CompoundTag()
+                                                    ? new CompoundNBT()
                                                     : mobDataItemStack.getTag();
                                     MobDataItem.setEntityNameToNBT(mobName, tag);
                                     mobDataItemStack.setTag(tag);

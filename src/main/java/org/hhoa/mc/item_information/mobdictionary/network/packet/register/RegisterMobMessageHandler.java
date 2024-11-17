@@ -156,8 +156,8 @@ package org.hhoa.mc.item_information.mobdictionary.network.packet.register;
 
 import java.io.IOException;
 import java.util.function.Supplier;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraftforge.fml.network.NetworkEvent;
 import org.hhoa.mc.item_information.mobdictionary.data.MobDatas;
 
 public class RegisterMobMessageHandler {
@@ -165,9 +165,9 @@ public class RegisterMobMessageHandler {
         ctx.get()
                 .enqueueWork(
                         () -> {
-                            ServerPlayer player = ctx.get().getSender();
+                            ServerPlayerEntity player = ctx.get().getSender();
                             if (player != null
-                                    && player.getUUID()
+                                    && player.getUniqueID()
                                             .toString()
                                             .equals(message.getUUIDString())) {
                                 try {

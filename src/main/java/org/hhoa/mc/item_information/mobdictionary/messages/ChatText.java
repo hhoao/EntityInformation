@@ -156,8 +156,9 @@ package org.hhoa.mc.item_information.mobdictionary.messages;
 
 import java.util.Arrays;
 import java.util.IllegalFormatException;
-import net.minecraft.locale.Language;
-import net.minecraft.network.chat.TextComponent;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.LanguageMap;
+import net.minecraft.util.text.StringTextComponent;
 
 public class ChatText {
     protected String text;
@@ -192,7 +193,7 @@ public class ChatText {
         try {
             Object[] array =
                     Arrays.stream(texts)
-                            .map((str) -> Language.getInstance().getOrDefault(str))
+                            .map((str) -> LanguageMap.getInstance().getLanguageData().get(str))
                             .toArray();
             return new ChatText(String.format(getText(), array));
         } catch (IllegalFormatException illegalformatexception) {
@@ -200,8 +201,8 @@ public class ChatText {
         }
     }
 
-    public TextComponent getTextComponent() {
-        return new TextComponent(getText());
+    public ITextComponent getTextComponent() {
+        return new StringTextComponent(getText());
     }
 
     @Override

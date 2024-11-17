@@ -154,8 +154,8 @@
 
 package org.hhoa.mc.item_information.itemtooltip.kaymap;
 
-import net.minecraft.client.KeyMapping;
-import net.minecraftforge.client.ClientRegistry;
+import net.minecraft.client.settings.KeyBinding;
+import net.minecraftforge.fml.client.registry.ClientRegistry;
 import org.lwjgl.glfw.GLFW;
 
 /**
@@ -165,16 +165,16 @@ import org.lwjgl.glfw.GLFW;
  * @since 2024/10/19
  */
 public class ItemTooltipKeyMappingRegistry {
-    public static KeyMapping searchKeyMapping;
-    public static KeyMapping enableItemTooltipKeyMapping;
-    public static KeyMapping changeSearchEngine;
+    public static KeyBinding searchKeyMapping;
+    public static KeyBinding enableItemTooltipKeyMapping;
+    public static KeyBinding changeSearchEngine;
 
     public static void registerSearchKeyMapping() {
-        searchKeyMapping = new KeyMapping("key.gui.search", GLFW.GLFW_KEY_I, "key.open");
+        searchKeyMapping = new KeyBinding("key.gui.search", GLFW.GLFW_KEY_I, "key.open");
         enableItemTooltipKeyMapping =
-                new KeyMapping("key.itemtooltip", GLFW.GLFW_KEY_O, "key.open");
+                new KeyBinding("key.itemtooltip", GLFW.GLFW_KEY_O, "key.open");
         changeSearchEngine =
-                new KeyMapping("key.change_search_engine", GLFW.GLFW_KEY_K, "key.open");
+                new KeyBinding("key.change_search_engine", GLFW.GLFW_KEY_K, "key.open");
         ClientRegistry.registerKeyBinding(searchKeyMapping);
         ClientRegistry.registerKeyBinding(enableItemTooltipKeyMapping);
         ClientRegistry.registerKeyBinding(changeSearchEngine);

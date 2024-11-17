@@ -158,8 +158,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.function.Supplier;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.client.entity.player.ClientPlayerEntity;
+import net.minecraftforge.fml.network.NetworkEvent;
 import org.hhoa.mc.item_information.mobdictionary.MobDictionary;
 import org.hhoa.mc.item_information.mobdictionary.data.MobDatas;
 import org.hhoa.mc.item_information.mobdictionary.messages.ChatText;
@@ -172,7 +172,7 @@ public class ServerSyncDataMessageHandler {
         ctx.get()
                 .enqueueWork(
                         () -> {
-                            LocalPlayer player = Minecraft.getInstance().player;
+                            ClientPlayerEntity player = Minecraft.getInstance().player;
                             Collection<String> nameList = message.getNameList();
                             EventType requestType = message.getRequestType();
                             ArrayList<String> successMobNames =
@@ -196,7 +196,7 @@ public class ServerSyncDataMessageHandler {
                                                     .withTranslatableTexts(
                                                             nameList.toArray(new String[0]))
                                                     .getTextComponent(),
-                                            player.getUUID());
+                                            player.getUniqueID());
                                 }
                             }
                             Dispatcher dispatcher = MobDictionary.getDispatcher();

@@ -154,14 +154,16 @@
 
 package org.hhoa.mc.item_information.mobdictionary;
 
-import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.world.item.Item;
-import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemGroup;
+import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.fml.event.lifecycle.GatherDataEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.forge.event.lifecycle.GatherDataEvent;
+import org.hhoa.mc.item_information.mobdictionary.capabilities.FirstLoginCapabilityImpl;
+import org.hhoa.mc.item_information.mobdictionary.capabilities.FirstLoginCapabilityStorage;
 import org.hhoa.mc.item_information.mobdictionary.capabilities.IFirstLoginCapability;
 import org.hhoa.mc.item_information.mobdictionary.item.MobDataItem;
 import org.hhoa.mc.item_information.mobdictionary.item.MobDictionaryItem;
@@ -187,13 +189,13 @@ public class MobDictionaryFMLEventsHandler {
                 .registerAll(
                         new MobDictionaryItem(
                                         new Item.Properties()
-                                                .stacksTo(1)
-                                                .tab(CreativeModeTab.TAB_TOOLS))
+                                                .maxStackSize(1)
+                                                .group(ItemGroup.TOOLS))
                                 .setRegistryName("dictionary"),
                         new MobDataItem(
                                         new Item.Properties()
-                                                .stacksTo(1)
-                                                .tab(CreativeModeTab.TAB_TOOLS))
+                                                .maxStackSize(1)
+                                                .group(ItemGroup.TOOLS))
                                 .setRegistryName("data"));
     }
 
@@ -205,7 +207,10 @@ public class MobDictionaryFMLEventsHandler {
     }
 
     @SubscribeEvent
-    public void registerCapabilities(RegisterCapabilitiesEvent event) {
-        event.register(IFirstLoginCapability.class);
+    public static void onCommonSetup(FMLCommonSetupEvent event) {
+        CapabilityManager.INSTANCE.register(
+                IFirstLoginCapability.class,
+                new FirstLoginCapabilityStorage(),
+                FirstLoginCapabilityImpl::new);
     }
 }

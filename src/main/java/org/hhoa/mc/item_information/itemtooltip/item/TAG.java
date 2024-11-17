@@ -155,7 +155,7 @@
 package org.hhoa.mc.item_information.itemtooltip.item;
 
 import javax.annotation.Nonnull;
-import org.jetbrains.annotations.NotNull;
+import org.antlr.v4.runtime.misc.NotNull;
 
 public enum TAG {
     GET("获取"),

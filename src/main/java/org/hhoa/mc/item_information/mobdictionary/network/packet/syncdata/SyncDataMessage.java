@@ -157,7 +157,7 @@ package org.hhoa.mc.item_information.mobdictionary.network.packet.syncdata;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.PacketBuffer;
 import org.hhoa.mc.item_information.mobdictionary.network.Event;
 import org.hhoa.mc.item_information.mobdictionary.network.EventType;
 
@@ -171,14 +171,14 @@ public abstract class SyncDataMessage implements Event {
         this.requestType = requestType;
     }
 
-    public static SyncDataMessage decode(FriendlyByteBuf buf, boolean isServer) {
+    public static SyncDataMessage decode(PacketBuffer buf, boolean isServer) {
         int length = buf.readInt();
         Set<String> mobNames = new HashSet<>();
 
         for (int i = 0; i < length; i++) {
-            mobNames.add(buf.readUtf());
+            mobNames.add(buf.readString());
         }
-        EventType requestType = buf.readEnum(EventType.class);
+        EventType requestType = buf.readEnumValue(EventType.class);
 
         if (isServer) {
             return new ServerSyncDataMessage(mobNames, requestType);
@@ -187,12 +187,12 @@ public abstract class SyncDataMessage implements Event {
         }
     }
 
-    public static void encode(SyncDataMessage msg, FriendlyByteBuf buf) {
+    public static void encode(SyncDataMessage msg, PacketBuffer buf) {
         buf.writeInt(msg.nameList.size());
         for (String name : msg.nameList) {
-            buf.writeUtf(name);
+            buf.writeString(name);
         }
-        buf.writeEnum(msg.requestType);
+        buf.writeEnumValue(msg.requestType);
     }
 
     public Collection<String> getNameList() {

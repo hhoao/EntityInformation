@@ -154,7 +154,7 @@
 
 package org.hhoa.mc.item_information.mobdictionary.messages;
 
-import net.minecraft.locale.Language;
+import net.minecraft.util.text.LanguageMap;
 import org.hhoa.mc.item_information.EntityInformation;
 
 /**
@@ -173,8 +173,9 @@ public class TranslatableChatText extends ChatText {
                 text,
                 (t) ->
                         withModId
-                                ? Language.getInstance()
-                                        .getOrDefault(EntityInformation.getModRelevantText(text))
-                                : Language.getInstance().getOrDefault(t));
+                                ? LanguageMap.getInstance()
+                                        .getLanguageData()
+                                        .get(EntityInformation.getModRelevantText(text))
+                                : LanguageMap.getInstance().getLanguageData().get(t));
     }
 }

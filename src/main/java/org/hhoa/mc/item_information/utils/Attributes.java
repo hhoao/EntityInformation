@@ -152,82 +152,30 @@
  * This Source Code Form is “Incompatible With Secondary Licenses”, as defined by the Mozilla Public License, v. 2.0.
  */
 
-package org.hhoa.mc.item_information.mobdictionary;
+package org.hhoa.mc.item_information.utils;
 
-import com.google.gson.JsonObject;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.common.crafting.CraftingHelper;
-import net.minecraftforge.common.crafting.conditions.ICondition;
-import net.minecraftforge.common.crafting.conditions.IConditionSerializer;
-import org.hhoa.mc.item_information.EntityInformation;
-import org.hhoa.mc.item_information.mobdictionary.data.ConfigData;
+import static net.minecraft.entity.ai.attributes.Attributes.*;
 
-public class Conditions {
-    public static final ResourceLocation ENABLE_NORMAL_CRAFTING =
-            EntityInformation.location("enable_normal_crafting");
-    public static final ResourceLocation ENABLE_SEWING_CRAFTING =
-            EntityInformation.location("enable_sewing_crafting");
+import net.minecraft.entity.ai.attributes.Attribute;
 
-    public static void register() {
-        CraftingHelper.register(EnableNormalCrafting.Serializer.INSTANCE);
-        CraftingHelper.register(EnableSewingCrafting.Serializer.INSTANCE);
-    }
-
-    public static class EnableNormalCrafting implements ICondition {
-        @Override
-        public ResourceLocation getID() {
-            return ENABLE_NORMAL_CRAFTING;
-        }
-
-        @Override
-        public boolean test() {
-            return ConfigData.enableNormalCrafting;
-        }
-
-        public static class Serializer implements IConditionSerializer<EnableNormalCrafting> {
-            public static Serializer INSTANCE = new Serializer();
-
-            @Override
-            public void write(JsonObject json, EnableNormalCrafting value) {}
-
-            @Override
-            public EnableNormalCrafting read(JsonObject json) {
-                return new EnableNormalCrafting();
-            }
-
-            @Override
-            public ResourceLocation getID() {
-                return ENABLE_NORMAL_CRAFTING;
-            }
-        }
-    }
-
-    public static class EnableSewingCrafting implements ICondition {
-        @Override
-        public ResourceLocation getID() {
-            return ENABLE_SEWING_CRAFTING;
-        }
-
-        @Override
-        public boolean test() {
-            return ConfigData.enableSewingKitSupport;
-        }
-
-        public static class Serializer implements IConditionSerializer<EnableSewingCrafting> {
-            public static Serializer INSTANCE = new Serializer();
-
-            @Override
-            public void write(JsonObject json, EnableSewingCrafting value) {}
-
-            @Override
-            public EnableSewingCrafting read(JsonObject json) {
-                return new EnableSewingCrafting();
-            }
-
-            @Override
-            public ResourceLocation getID() {
-                return ENABLE_SEWING_CRAFTING;
-            }
-        }
-    }
+/**
+ * AttributeUtils
+ *
+ * @author xianxing
+ * @since 2024/11/17
+ */
+public class Attributes {
+    public static final Attribute MAX_HEALTH = field_233818_a_;
+    public static final Attribute FOLLOW_RANGE = field_233819_b_;
+    public static final Attribute KNOCKBACK_RESISTANCE = field_233820_c_;
+    public static final Attribute MOVEMENT_SPEED = field_233821_d_;
+    public static final Attribute FLYING_SPEED = field_233822_e_;
+    public static final Attribute ATTACK_DAMAGE = field_233823_f_;
+    public static final Attribute ATTACK_KNOCKBACK = field_233824_g_;
+    public static final Attribute ATTACK_SPEED = field_233825_h_;
+    public static final Attribute ARMOR = field_233826_i_;
+    public static final Attribute ARMOR_TOUGHNESS = field_233827_j_;
+    public static final Attribute LUCK = field_233828_k_;
+    public static final Attribute SPAWN_REINFORCEMENTS = field_233829_l_;
+    public static final Attribute JUMP_STRENGTH = field_233830_m_;
 }

@@ -154,7 +154,7 @@
 
 package org.hhoa.mc.item_information;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.Mod;
 import org.hhoa.mc.item_information.itemtooltip.ItemTooltip;
 import org.hhoa.mc.item_information.mobdictionary.MobDictionary;
