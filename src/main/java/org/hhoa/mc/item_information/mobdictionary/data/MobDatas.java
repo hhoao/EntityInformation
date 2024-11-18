@@ -164,19 +164,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.world.server.ServerWorld;
-import net.minecraft.world.storage.DimensionSavedDataManager;
+import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fml.network.NetworkDirection;
 import org.hhoa.mc.item_information.mobdictionary.MobDictionary;
+import org.hhoa.mc.item_information.mobdictionary.capabilities.MobDataCapability;
+import org.hhoa.mc.item_information.mobdictionary.capabilities.MobDataCapabilityImpl;
 import org.hhoa.mc.item_information.mobdictionary.network.EventType;
 import org.hhoa.mc.item_information.mobdictionary.network.PacketHandler;
 import org.hhoa.mc.item_information.mobdictionary.network.packet.syncdata.ClientSyncDataMessage;
 import org.hhoa.mc.item_information.mobdictionary.network.packet.syncdata.ServerSyncDataMessage;
 import org.hhoa.mc.item_information.mobdictionary.network.packet.syncdata.SyncDataMessage;
-import org.hhoa.mc.item_information.utils.Worlds;
 
 public final class MobDatas {
     private static final Set<String> clientMobNameSet = new HashSet<>();
@@ -241,26 +241,18 @@ public final class MobDatas {
         sendSyncDataMessageOnServer(player, mobNames, EventType.DELETE);
     }
 
-    private static MobSavedData getMobSavedData(ServerPlayerEntity ServerPlayerEntity) {
-        UUID playerUuid = ServerPlayerEntity.getUniqueID();
+    private static MobSavedData getMobSavedData(ServerPlayerEntity serverPlayerEntity) {
+        UUID playerUuid = serverPlayerEntity.getUniqueID();
 
         MobSavedData mobSavedData;
         if (serverMobNameListMap.containsKey(playerUuid)) {
             mobSavedData = serverMobNameListMap.get(playerUuid);
         } else {
-            MinecraftServer server = ServerPlayerEntity.getServer();
-            if (server != null) {
-                ServerWorld overworld = server.getWorld(Worlds.overworld);
-                DimensionSavedDataManager savedData = overworld.getChunkProvider().getSavedData();
-                mobSavedData =
-                        overworld
-                                .getChunkProvider()
-                                .getSavedData()
-                                .get(MobSavedData::new, getMobSavedDataName(playerUuid));
-                serverMobNameListMap.put(playerUuid, mobSavedData);
-            } else {
-                throw new RuntimeException();
-            }
+            LazyOptional<MobDataCapability> capability =
+                    serverPlayerEntity.getCapability(MobDictionary.mobDataCapability);
+            MobDataCapability mobDataCapability = capability.orElseGet(MobDataCapabilityImpl::new);
+            mobSavedData = mobDataCapability.getMobSavedData();
+            serverMobNameListMap.put(playerUuid, mobSavedData);
         }
         return mobSavedData;
     }
@@ -275,7 +267,7 @@ public final class MobDatas {
         List<String> list =
                 MobDictionary.getEntityManager().getEntityTypes().stream()
                         .map(EntityType::getTranslationKey)
-                        .toList();
+                        .collect(Collectors.toList());
         saveMobNamesOnServer(ServerPlayerEntity, list);
     }
 

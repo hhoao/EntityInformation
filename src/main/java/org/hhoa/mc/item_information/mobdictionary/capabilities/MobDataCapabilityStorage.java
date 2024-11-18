@@ -152,30 +152,30 @@
  * This Source Code Form is “Incompatible With Secondary Licenses”, as defined by the Mozilla Public License, v. 2.0.
  */
 
-package org.hhoa.mc.item_information.mobdictionary.recipes;
+package org.hhoa.mc.item_information.mobdictionary.capabilities;
 
-import java.util.function.Consumer;
-import net.minecraft.data.DataGenerator;
-import net.minecraft.data.IFinishedRecipe;
-import net.minecraft.data.RecipeProvider;
-import net.minecraft.item.Items;
-import org.hhoa.mc.item_information.mobdictionary.MobDictionary;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.INBT;
+import net.minecraft.util.Direction;
+import net.minecraftforge.common.capabilities.Capability;
 
-public class MobDictionaryRecipeProvider extends RecipeProvider {
-    public MobDictionaryRecipeProvider(DataGenerator p_125973_) {
-        super(p_125973_);
+public class MobDataCapabilityStorage implements Capability.IStorage<MobDataCapability> {
+    @Override
+    public INBT writeNBT(
+            Capability<MobDataCapability> capability, MobDataCapability instance, Direction side) {
+        CompoundNBT tag = new CompoundNBT();
+        instance.getMobSavedData().write(tag);
+        return tag;
     }
 
     @Override
-    protected void registerRecipes(Consumer<IFinishedRecipe> consumer) {
-        ShapeBasedRecipeBuilder.shapedRecipe(MobDictionary.mobDictionary)
-                .patternLine("bs ")
-                .patternLine("   ")
-                .patternLine("   ")
-                .key('b', Items.BOOK)
-                .key('s', Items.COMPASS)
-                .addCriterion("has_book", hasItem(Items.BOOK))
-                .addCriterion("has_compass", hasItem(Items.COMPASS))
-                .build(consumer);
+    public void readNBT(
+            Capability<MobDataCapability> capability,
+            MobDataCapability instance,
+            Direction side,
+            INBT nbt) {
+        if (nbt instanceof CompoundNBT) {
+            instance.getMobSavedData().read((CompoundNBT) nbt);
+        }
     }
 }

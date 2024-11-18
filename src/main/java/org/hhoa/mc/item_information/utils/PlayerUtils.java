@@ -186,11 +186,12 @@ public class PlayerUtils {
 
     public static void removeSingleItemFromPlayer(PlayerEntity player, Item item, int count) {
         for (int i = 0; i < player.inventory.getSizeInventory(); i++) {
-            ItemStack stack = player.inventory.mainInventory.get(i);
+            ItemStack stack = player.inventory.getStackInSlot(i);
             if (!stack.isEmpty() && stack.getItem() == item) {
                 int count1 = stack.getCount();
                 if (count1 > count) {
                     stack.shrink(count);
+                    break;
                 } else {
                     count -= count1;
                     player.inventory.setInventorySlotContents(i, ItemStack.EMPTY);
@@ -223,7 +224,7 @@ public class PlayerUtils {
     }
 
     public static void addItemToPlayer(ItemStack itemStack, PlayerEntity player) {
-        if (!player.container.getInventory().add(itemStack)) {
+        if (!player.addItemStackToInventory(itemStack)) {
             player.dropItem(itemStack, false);
         }
     }

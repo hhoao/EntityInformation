@@ -165,6 +165,9 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.hhoa.mc.item_information.mobdictionary.capabilities.FirstLoginCapabilityImpl;
 import org.hhoa.mc.item_information.mobdictionary.capabilities.FirstLoginCapabilityStorage;
 import org.hhoa.mc.item_information.mobdictionary.capabilities.IFirstLoginCapability;
+import org.hhoa.mc.item_information.mobdictionary.capabilities.MobDataCapability;
+import org.hhoa.mc.item_information.mobdictionary.capabilities.MobDataCapabilityImpl;
+import org.hhoa.mc.item_information.mobdictionary.capabilities.MobDataCapabilityStorage;
 import org.hhoa.mc.item_information.mobdictionary.item.MobDataItem;
 import org.hhoa.mc.item_information.mobdictionary.item.MobDictionaryItem;
 import org.hhoa.mc.item_information.mobdictionary.network.PacketHandler;
@@ -180,6 +183,14 @@ public class MobDictionaryFMLEventsHandler {
     @SubscribeEvent
     public void preInit(FMLCommonSetupEvent event) {
         MobDictionary.RECIPE_SERIALIZERS.register(FMLJavaModLoadingContext.get().getModEventBus());
+        CapabilityManager.INSTANCE.register(
+                IFirstLoginCapability.class,
+                new FirstLoginCapabilityStorage(),
+                FirstLoginCapabilityImpl::new);
+        CapabilityManager.INSTANCE.register(
+                MobDataCapability.class,
+                new MobDataCapabilityStorage(),
+                MobDataCapabilityImpl::new);
         PacketHandler.registerMessages();
     }
 
@@ -204,13 +215,5 @@ public class MobDictionaryFMLEventsHandler {
         MobDictionaryRecipeProvider myRecipeProvider =
                 new MobDictionaryRecipeProvider(event.getGenerator());
         event.getGenerator().addProvider(myRecipeProvider);
-    }
-
-    @SubscribeEvent
-    public static void onCommonSetup(FMLCommonSetupEvent event) {
-        CapabilityManager.INSTANCE.register(
-                IFirstLoginCapability.class,
-                new FirstLoginCapabilityStorage(),
-                FirstLoginCapabilityImpl::new);
     }
 }

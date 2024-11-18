@@ -191,9 +191,9 @@ public class MobDataItem extends Item {
         try {
             if (nbt != null) {
                 name = getEntityNameFromNBT(nbt);
-                if (player instanceof ServerPlayerEntity playerMP) {
+                if (player instanceof ServerPlayerEntity) {
                     if (!MobDatas.containsMobNameOnClient(name)) {
-                        MobDatas.saveMobNameOnServer(playerMP, name);
+                        MobDatas.saveMobNameOnServer((ServerPlayerEntity) player, name);
                         PlayerUtils.removeSingleItemFromPlayer(player, itemStack.getItem(), 1);
                     } else {
                         player.sendMessage(

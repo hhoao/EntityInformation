@@ -158,10 +158,12 @@ import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.client.gui.FontRenderer;
@@ -245,7 +247,9 @@ public class MobDictionaryGui extends Screen {
     private final List<String> eventHandlerIds = new ArrayList<>();
 
     public MobDictionaryGui() {
-        super(Texts.DICTIONARY_NAME.getTextComponent());
+        super(
+                new StringTextComponent(
+                        I18n.format(MobDictionary.mobDictionary.getTranslationKey())));
     }
 
     // init
@@ -311,40 +315,30 @@ public class MobDictionaryGui extends Screen {
         ArrayList<Tuple<Integer, EntityType<?>>> entityTypes = new ArrayList<>();
         entityTypes.addAll(
                 unLockedMobTypesWithId.stream()
-                        .sorted(
-                                (o1, o2) ->
-                                        CharSequence.compare(
-                                                o1.getB().getTranslationKey(),
-                                                o2.getB().getTranslationKey()))
-                        .toList());
+                        .sorted(Comparator.comparing(o -> o.getB().getTranslationKey()))
+                        .collect(Collectors.toList()));
         entityTypes.addAll(
                 lockedMobTypesWithId.stream()
-                        .sorted(
-                                (o1, o2) ->
-                                        CharSequence.compare(
-                                                o1.getB().getTranslationKey(),
-                                                o2.getB().getTranslationKey()))
-                        .toList());
+                        .sorted(Comparator.comparing(o -> o.getB().getTranslationKey()))
+                        .collect(Collectors.toList()));
         this.entityTypes = entityTypes.toArray(new Tuple[0]);
     }
 
     private @NotNull Button getButton(int size) {
-        Button convertedPaperButton =
-                new MobDictionaryGuiButton(
-                        originX + 19,
-                        originY + 136,
-                        size,
-                        size,
-                        0,
-                        0,
-                        size,
-                        new ResourceLocation(ModInfo.ID, "textures/gui/button.png"),
-                        size,
-                        2 * size,
-                        this::convertedPaperButtonOnPress,
-                        new StringTextComponent("B"),
-                        this::convertedPaperRenderToolTip);
-        return convertedPaperButton;
+        return new MobDictionaryGuiButton(
+                originX + 19,
+                originY + 136,
+                size,
+                size,
+                0,
+                0,
+                size,
+                new ResourceLocation(ModInfo.ID, "textures/gui/button.png"),
+                size,
+                2 * size,
+                this::convertedPaperButtonOnPress,
+                new StringTextComponent("B"),
+                this::convertedPaperRenderToolTip);
     }
 
     // mouseDragged
@@ -376,7 +370,7 @@ public class MobDictionaryGui extends Screen {
                     } else {
                         player.sendMessage(
                                 Texts.NOT_HAVE_ITEM
-                                        .withTranslatableTexts(
+                                        .withText(
                                                 I18n.format(Items.PAPER.getTranslationKey())
                                                         + "+"
                                                         + I18n.format(
@@ -698,7 +692,7 @@ public class MobDictionaryGui extends Screen {
 
         MatrixStack poseStack = new MatrixStack();
         float scale = entityScale;
-        poseStack.translate(originX + 49, originY + 70, 0);
+        poseStack.translate(originX + 49, originY + 70, 2);
         poseStack.scale(scale, scale, scale);
         poseStack.rotate(Vector3f.ZP.rotationDegrees(180F));
         poseStack.rotate(Vector3f.YP.rotationDegrees(-rotationX)); // X 轴旋转
@@ -830,6 +824,9 @@ public class MobDictionaryGui extends Screen {
                     this.field_230689_k_,
                     this.textureWidth,
                     this.textureHeight);
+            if (this.func_230449_g_()) {
+                this.func_230443_a_(p_230431_1_, p_230431_2_, p_230431_3_);
+            }
         }
     }
 }

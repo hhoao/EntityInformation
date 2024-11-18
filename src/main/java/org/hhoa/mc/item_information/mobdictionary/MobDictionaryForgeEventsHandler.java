@@ -175,6 +175,7 @@ import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 import org.hhoa.mc.item_information.EntityInformation;
 import org.hhoa.mc.item_information.mobdictionary.capabilities.FirstLoginCapabilityProvider;
 import org.hhoa.mc.item_information.mobdictionary.capabilities.IFirstLoginCapability;
+import org.hhoa.mc.item_information.mobdictionary.capabilities.MobDataCapabilityProvider;
 import org.hhoa.mc.item_information.mobdictionary.command.MobDictionaryCommand;
 import org.hhoa.mc.item_information.mobdictionary.data.MobDatas;
 import org.hhoa.mc.item_information.mobdictionary.network.EventType;
@@ -189,12 +190,13 @@ import org.hhoa.mc.item_information.utils.PlayerUtils;
 public class MobDictionaryForgeEventsHandler {
     public static final ResourceLocation FIRST_LOGIN_CAP =
             EntityInformation.location("first_login");
+    public static final ResourceLocation MOB_DATA = EntityInformation.location("mob_data");
 
     @SubscribeEvent
     public void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
         PlayerEntity player = event.getPlayer();
-        if (player instanceof ServerPlayerEntity serverPlayer) {
-            MobDatas.loadMobDataOnServer(serverPlayer);
+        if (player instanceof ServerPlayerEntity) {
+            MobDatas.loadMobDataOnServer((ServerPlayerEntity) player);
             LazyOptional<IFirstLoginCapability> capability =
                     player.getCapability(MobDictionary.firstLoginCapability);
 
@@ -203,7 +205,6 @@ public class MobDictionaryForgeEventsHandler {
                         if (!cap.hasLoggedIn()) {
                             ItemStack welcomeItem = new ItemStack(MobDictionary.mobDictionary, 1);
                             PlayerUtils.addItemToPlayer(welcomeItem, player);
-
                             cap.setHasLoggedIn(true);
                         }
                     });
@@ -212,8 +213,9 @@ public class MobDictionaryForgeEventsHandler {
 
     @SubscribeEvent
     public void attachCapability(AttachCapabilitiesEvent<Entity> event) {
-        if (event.getObject() instanceof ServerPlayerEntity) {
+        if (event.getObject() instanceof PlayerEntity) {
             event.addCapability(FIRST_LOGIN_CAP, new FirstLoginCapabilityProvider());
+            event.addCapability(MOB_DATA, new MobDataCapabilityProvider());
         }
     }
 

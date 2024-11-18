@@ -154,6 +154,7 @@
 
 package org.hhoa.mc.item_information.utils;
 
+import com.google.common.io.ByteStreams;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -174,7 +175,7 @@ public class ResourcesUtils {
             IResource resource =
                     Minecraft.getInstance().getResourceManager().getResource(resourceLocation);
             InputStream inputStream = resource.getInputStream();
-            return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+            return new String(ByteStreams.toByteArray(inputStream), StandardCharsets.UTF_8);
         } else {
             return null;
         }

@@ -168,8 +168,8 @@ public class Texts {
     public static final ChatText ERROR = new TranslatableChatText("common.register_error");
     public static final ChatText UNREGISTER_NOT_EXIST =
             new TranslatableChatText("common.unregister_not_exist");
-    public static final ChatText DICTIONARY_NAME = new TranslatableChatText("dictionary");
-    public static final ChatText DICTIONARY_DATA_NAME = new TranslatableChatText("data");
+    public static final ChatText DICTIONARY_NAME = new TranslatableChatText("item.dictionary");
+    public static final ChatText DICTIONARY_DATA_NAME = new TranslatableChatText("item.data");
     public static final ChatText REGISTERED_VALUE =
             new TranslatableChatText("common.registered_value");
     public static final ChatText OUTPUT_PIECE = new TranslatableChatText("common.output_piece");

@@ -156,6 +156,7 @@ package org.hhoa.mc.item_information.itemtooltip;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
 import java.awt.*;
 import java.io.IOException;
@@ -230,7 +231,7 @@ public class ItemTooltipForgeEventsHandler {
                                             InputStream inputStream = resource.getInputStream();
                                             String json =
                                                     new String(
-                                                            inputStream.readAllBytes(),
+                                                            ByteStreams.toByteArray(inputStream),
                                                             StandardCharsets.UTF_8);
                                             ItemInfo itemInfo = gson.fromJson(json, ItemInfo.class);
                                             Map<String, Set<String>> infos = itemInfo.getInfos();
@@ -263,7 +264,7 @@ public class ItemTooltipForgeEventsHandler {
 
     private static TextComponent getGenerateComponent(Set<String> generates) {
         if (generates != null) {
-            String[] array = generates.toArray(String[]::new);
+            String[] array = generates.toArray(new String[0]);
             String str = String.join(",", array);
             return new StringTextComponent("生成: " + str);
         }
@@ -272,7 +273,7 @@ public class ItemTooltipForgeEventsHandler {
 
     private static TextComponent getGetComponent(Set<String> get) {
         if (get != null) {
-            String[] array = get.toArray(String[]::new);
+            String[] array = get.toArray(new String[0]);
             String str = String.join(",", array);
             return new StringTextComponent("获取途径: " + str);
         }
@@ -281,7 +282,7 @@ public class ItemTooltipForgeEventsHandler {
 
     private static TextComponent getUseComponent(Set<String> usages) {
         if (usages != null) {
-            String[] array = usages.toArray(String[]::new);
+            String[] array = usages.toArray(new String[0]);
             String descStr = String.join(",", array);
             return new StringTextComponent("用途: " + descStr);
         }
@@ -294,7 +295,7 @@ public class ItemTooltipForgeEventsHandler {
             Iterator<String> iterator = descriptions.iterator();
             while (iterator.hasNext()) {
                 String description = iterator.next();
-                if (description == null || description.isBlank()) {
+                if (description == null || description.isEmpty()) {
                     iterator.remove();
                 } else {
                     int is = description.indexOf("是");
@@ -309,7 +310,7 @@ public class ItemTooltipForgeEventsHandler {
             }
 
             if (singleDesc == null) {
-                String[] array = descriptions.toArray(String[]::new);
+                String[] array = descriptions.toArray(new String[0]);
                 singleDesc = String.join("\n", array);
             }
             return new StringTextComponent(singleDesc);
@@ -372,14 +373,15 @@ public class ItemTooltipForgeEventsHandler {
         String modName =
                 URLEncoder.encode(
                         Objects.requireNonNull(stack.getItem().getCreatorModId(stack)),
-                        StandardCharsets.UTF_8);
+                        String.valueOf(StandardCharsets.UTF_8));
         String regName =
                 URLEncoder.encode(
                         (Objects.requireNonNull(ForgeRegistries.ITEMS.getKey(stack.getItem())))
                                 .toString(),
-                        StandardCharsets.UTF_8);
+                        String.valueOf(StandardCharsets.UTF_8));
         String displayName =
-                URLEncoder.encode(stack.getDisplayName().getString(), StandardCharsets.UTF_8);
+                URLEncoder.encode(
+                        stack.getDisplayName().getString(), String.valueOf(StandardCharsets.UTF_8));
         URL apiUrl = new URL(String.format("https://api.mcmod.cn/getItem/?regname=%s", regName));
         int mcModApiNum =
                 Integer.parseInt(

@@ -161,7 +161,6 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.INBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.nbt.StringNBT;
-import net.minecraft.world.storage.WorldSavedData;
 import org.antlr.v4.runtime.misc.NotNull;
 
 /**
@@ -170,14 +169,9 @@ import org.antlr.v4.runtime.misc.NotNull;
  * @author xianxing
  * @since 2024/10/29
  */
-public class MobSavedData extends WorldSavedData {
+public class MobSavedData {
     private Set<String> mobNameSet = new HashSet<>();
 
-    public MobSavedData() {
-        super("mob_data");
-    }
-
-    @Override
     public @NotNull CompoundNBT write(@NotNull CompoundNBT compoundTag) {
         ListNBT tags = new ListNBT();
 
@@ -189,7 +183,6 @@ public class MobSavedData extends WorldSavedData {
         return compoundTag;
     }
 
-    @Override
     public void read(CompoundNBT tag) {
         ListNBT mobData = (ListNBT) tag.get("mob_data");
 
@@ -209,18 +202,15 @@ public class MobSavedData extends WorldSavedData {
 
     public void addMobName(String mobName) {
         mobNameSet.add(mobName);
-        this.setDirty(true);
     }
 
     public void addMobNames(Collection<String> mobNames) {
         mobNameSet.addAll(mobNames);
-        this.setDirty(true);
     }
 
     public HashSet<String> clearMobNames() {
         HashSet<String> mobNames = new HashSet<>(mobNameSet);
         mobNameSet.clear();
-        this.setDirty(true);
         return mobNames;
     }
 
@@ -230,11 +220,9 @@ public class MobSavedData extends WorldSavedData {
 
     public void removeMobName(String mobName) {
         mobNameSet.remove(mobName);
-        this.setDirty(true);
     }
 
     public void removeMobNames(Collection<String> mobNames) {
         mobNameSet.removeAll(mobNames);
-        this.setDirty(true);
     }
 }

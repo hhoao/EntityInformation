@@ -175,13 +175,17 @@ public class ServerSyncDataMessageHandler {
                             ClientPlayerEntity player = Minecraft.getInstance().player;
                             Collection<String> nameList = message.getNameList();
                             EventType requestType = message.getRequestType();
-                            ArrayList<String> successMobNames =
-                                    switch (requestType) {
-                                        case PUT, REGISTER ->
-                                                MobDatas.addMobNamesOnClient(nameList);
-                                        case DELETE -> MobDatas.removeMobNamesOnClient(nameList);
-                                        default -> null;
-                                    };
+                            ArrayList<String> successMobNames = null;
+                            switch (requestType) {
+                                case PUT:
+                                case REGISTER:
+                                    successMobNames = MobDatas.addMobNamesOnClient(nameList);
+                                    break;
+                                case DELETE:
+                                    {
+                                        successMobNames = MobDatas.removeMobNamesOnClient(nameList);
+                                    }
+                            }
 
                             if (requestType != EventType.REGISTER) {
                                 ChatText chatMessage =

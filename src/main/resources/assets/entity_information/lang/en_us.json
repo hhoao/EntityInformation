@@ -5,8 +5,8 @@
   "key.change_search_engine": "Change Search Engine(MCMOD, WIKI)",
   "key.enable": "Enable",
 
-  "entity_information.item.dictionary.name": "Mob Dictionary",
-  "entity_information.item.data.name": "Piece of Dictionary",
+  "entity_information.item.dictionary": "Mob Dictionary",
+  "entity_information.item.data": "Piece of Dictionary",
   "itemGroup": "Mob Dictionary",
 
   "item.entity_information.dictionary": "Mob Dictionary",
