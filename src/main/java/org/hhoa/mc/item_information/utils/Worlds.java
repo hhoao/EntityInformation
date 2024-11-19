@@ -164,7 +164,7 @@ import net.minecraft.world.World;
  * @since 2024/11/17
  */
 public class Worlds {
-    public static final RegistryKey<World> overworld = World.field_234918_g_;
-    public static final RegistryKey<World> the_nether = World.field_234919_h_;
-    public static final RegistryKey<World> the_end = World.field_234920_i_;
+    public static final RegistryKey<World> overworld = World.OVERWORLD;
+    public static final RegistryKey<World> the_nether = World.THE_NETHER;
+    public static final RegistryKey<World> the_end = World.THE_END;
 }

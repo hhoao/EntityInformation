@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "conditions": [
+    {
+      "type": "forge:true"
+    }
+  ],
+  "pattern": [
+    "bs ",
+    "   ",
+    "   "
+  ],
+  "key": {
+    "b": {
+      "item": "minecraft:book"
+    },
+    "s": {
+      "item": "minecraft:compass"
+    }
+  },
+  "result": {
+    "item": "entity_information:dictionary"
+  }
+}

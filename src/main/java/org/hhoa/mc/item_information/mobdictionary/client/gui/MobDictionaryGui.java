@@ -155,7 +155,6 @@
 package org.hhoa.mc.item_information.mobdictionary.client.gui;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
-import com.mojang.blaze3d.systems.RenderSystem;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -166,10 +165,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
-import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.Widget;
 import net.minecraft.client.gui.widget.button.Button;
+import net.minecraft.client.gui.widget.button.ImageButton;
 import net.minecraft.client.renderer.IRenderTypeBuffer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.entity.EntityRenderer;
@@ -178,6 +176,7 @@ import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.ai.attributes.Attributes;
 import net.minecraft.entity.effect.LightningBoltEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -187,6 +186,7 @@ import net.minecraft.util.math.vector.Vector3f;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.LanguageMap;
 import net.minecraft.util.text.StringTextComponent;
+import net.minecraftforge.fml.server.ServerLifecycleHooks;
 import org.antlr.v4.runtime.misc.NotNull;
 import org.hhoa.mc.item_information.EntityInformation;
 import org.hhoa.mc.item_information.ModInfo;
@@ -199,9 +199,9 @@ import org.hhoa.mc.item_information.mobdictionary.network.Event;
 import org.hhoa.mc.item_information.mobdictionary.network.EventType;
 import org.hhoa.mc.item_information.mobdictionary.network.MobDictionaryGuiButtonClickEvent;
 import org.hhoa.mc.item_information.mobdictionary.network.PacketHandler;
-import org.hhoa.mc.item_information.utils.Attributes;
 import org.hhoa.mc.item_information.utils.EntityUtils;
 import org.hhoa.mc.item_information.utils.PlayerUtils;
+import org.hhoa.mc.item_information.utils.Worlds;
 
 public class MobDictionaryGui extends Screen {
     private static final net.minecraft.util.ResourceLocation dictionaryResource =
@@ -252,13 +252,12 @@ public class MobDictionaryGui extends Screen {
                         I18n.format(MobDictionary.mobDictionary.getTranslationKey())));
     }
 
-    // init
     @Override
-    protected void func_231160_c_() {
+    protected void init() {
         // field_230712_o_: font
-        this.stringHeight = field_230712_o_.FONT_HEIGHT;
-        this.originX = (this.field_230708_k_ - this.xSize) / 2;
-        this.originY = (this.field_230709_l_ - this.ySize) / 2;
+        this.stringHeight = this.font.FONT_HEIGHT;
+        this.originX = (this.width - this.xSize) / 2;
+        this.originY = (this.height - this.ySize) / 2;
         this.mobBox = new Box2D(originX + 19, originY + 12, originX + 78, originY + 82);
 
         displayEntity = null;
@@ -272,27 +271,11 @@ public class MobDictionaryGui extends Screen {
         Button convertedPaperButton = getButton(8);
 
         lightningBolt = EntityType.LIGHTNING_BOLT.create(Minecraft.getInstance().world);
-        this.addRenderableWidget(convertedPaperButton);
-    }
-
-    public void addRenderableWidget(Widget widget) {
-        this.func_230480_a_(widget);
+        this.addButton(convertedPaperButton);
     }
 
     private void processMobDictionaryGuiButtonClickEventCallBack(Event event) {
         initUnLockedMobTypes();
-    }
-
-    public FontRenderer getFont() {
-        return this.field_230712_o_;
-    }
-
-    public int getWidth() {
-        return this.field_230708_k_;
-    }
-
-    public int getHeight() {
-        return this.field_230709_l_;
     }
 
     private void initUnLockedMobTypes() {
@@ -325,7 +308,7 @@ public class MobDictionaryGui extends Screen {
     }
 
     private @NotNull Button getButton(int size) {
-        return new MobDictionaryGuiButton(
+        return new ImageButton(
                 originX + 19,
                 originY + 136,
                 size,
@@ -337,20 +320,19 @@ public class MobDictionaryGui extends Screen {
                 size,
                 2 * size,
                 this::convertedPaperButtonOnPress,
-                new StringTextComponent("B"),
-                this::convertedPaperRenderToolTip);
+                this::convertedPaperRenderToolTip,
+                new StringTextComponent("B"));
     }
 
-    // mouseDragged
     @Override
-    public boolean func_231045_a_(
+    public boolean mouseDragged(
             double mouseX, double mouseY, int button, double deltaX, double deltaY) {
         if (isMobDragging) {
             rotationX += deltaX * 0.5f;
             rotationY += deltaY * 0.5f;
             return true;
         }
-        return super.func_231045_a_(mouseX, mouseY, button, deltaX, deltaY);
+        return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
     }
 
     private void convertedPaperButtonOnPress(Button button) {
@@ -387,13 +369,12 @@ public class MobDictionaryGui extends Screen {
         }
     }
 
-    // onClose
     @Override
-    public void func_231175_as__() {
+    public void onClose() {
         for (String eventHandlerId : eventHandlerIds) {
             MobDictionary.getDispatcher().removeEventHandler(eventHandlerId);
         }
-        super.func_231175_as__();
+        super.onClose();
     }
 
     private void convertedPaperRenderToolTip(
@@ -403,41 +384,37 @@ public class MobDictionaryGui extends Screen {
 
         int maxWidth = 0;
         for (ChatText chatMessage : tooltipStringList) {
-            maxWidth = Math.max(getFont().getStringWidth(chatMessage.getText()), maxWidth);
+            maxWidth = Math.max(font.getStringWidth(chatMessage.getText()), maxWidth);
         }
 
-        // fill
-        func_238467_a_(
+        fill(
                 postStack,
                 tooltipX - 3,
                 tooltipY - 3,
                 tooltipX + 3 + maxWidth + 10,
-                tooltipY + 8 + getFont().FONT_HEIGHT * tooltipStringList.size(),
+                tooltipY + 8 + font.FONT_HEIGHT * tooltipStringList.size(),
                 0xF0100010);
 
         for (int i = 0; i < tooltipStringList.size(); i++) {
             ITextComponent text = tooltipStringList.get(i).getTextComponent();
             // draw
-            getFont().func_238407_a_(postStack, text, tooltipX, tooltipY + i * 10, 0xFFFFFF);
+            font.func_243246_a(postStack, text, tooltipX, tooltipY + i * 10, 0xFFFFFF);
         }
     }
 
-    // isPauseScreen
     @Override
-    public boolean func_231177_au__() {
+    public boolean isPauseScreen() {
         return false;
     }
 
-    // tick
     @Override
-    public void func_231023_e_() {
-        super.func_231160_c_();
+    public void tick() {
+        super.tick();
         currentTicks += 1;
     }
 
-    // render
     @Override
-    public void func_230430_a_(
+    public void render(
             @NotNull MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
         this.yaw2 = this.yaw;
         this.drawGuiBackgroundLayer(matrixStack);
@@ -457,20 +434,18 @@ public class MobDictionaryGui extends Screen {
         }
 
         this.drawMobNames(matrixStack, mouseX, mouseY);
-        super.func_230430_a_(matrixStack, mouseX, mouseY, partialTicks);
+        super.render(matrixStack, mouseX, mouseY, partialTicks);
         this.yaw = 2.0D + yaw2 + (yaw2 - yaw) * partialTicks;
     }
 
-    // mouseReleased
     @Override
-    public boolean func_231048_c_(double mouseX, double mouseY, int button) {
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
         isMobDragging = false;
-        return super.func_231048_c_(mouseX, mouseY, button);
+        return super.mouseReleased(mouseX, mouseY, button);
     }
 
-    // mouseClicked
     @Override
-    public boolean func_231044_a_(double mouseX, double mouseY, int mouseButton) {
+    public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
         if (mouseButton == 0 && mobBox.isInBox(mouseX, mouseY)) {
             isMobDragging = true;
         }
@@ -501,7 +476,7 @@ public class MobDictionaryGui extends Screen {
                 break;
             }
         }
-        return super.func_231044_a_(mouseX, mouseY, mouseButton);
+        return super.mouseClicked(mouseX, mouseY, mouseButton);
     }
 
     private void initRenderParams() {
@@ -513,35 +488,33 @@ public class MobDictionaryGui extends Screen {
     public void drawGuiBackgroundLayer(MatrixStack matrixStack) {
         Minecraft.getInstance().getTextureManager().bindTexture(dictionaryResource);
         // bill
-        this.func_238474_b_(matrixStack, originX, originY, 0, 0, this.xSize, this.ySize);
+        this.blit(matrixStack, originX, originY, 0, 0, this.xSize, this.ySize);
     }
 
     private void drawLockMobInfo(MatrixStack matrixStack) {
-        this.getFont()
-                .func_238421_b_(
-                        matrixStack, "??????", originX + 19, originY + 85, this.stringColor);
+        this.font.drawString(matrixStack, "??????", originX + 19, originY + 85, this.stringColor);
     }
 
     public void drawUnLockMobInfo(MatrixStack matrixStack) {
         List<Tuple<String, String>> kvList = new ArrayList<>();
         kvList.add(
                 new Tuple<>(
-                        I18n.format(Attributes.MAX_HEALTH.func_233754_c_()),
+                        I18n.format(Attributes.MAX_HEALTH.getAttributeName()),
                         String.format(":%.1f", displayEntity.getMaxHealth())));
         kvList.add(
                 new Tuple<>(
-                        I18n.format(Attributes.ARMOR.func_233754_c_()),
+                        I18n.format(Attributes.ARMOR.getAttributeName()),
                         String.format(":%d", displayEntity.getTotalArmorValue())));
         kvList.add(
                 new Tuple<>(
-                        I18n.format(Attributes.ATTACK_DAMAGE.func_233754_c_()),
+                        I18n.format(Attributes.ATTACK_DAMAGE.getAttributeName()),
                         String.format(
                                 ":%.1f",
                                 EntityUtils.getEntityAttribute(
                                         displayEntity, Attributes.ATTACK_DAMAGE))));
         kvList.add(
                 new Tuple<>(
-                        I18n.format(Attributes.MOVEMENT_SPEED.func_233754_c_()),
+                        I18n.format(Attributes.MOVEMENT_SPEED.getAttributeName()),
                         String.format(
                                 ":%.1f",
                                 EntityUtils.getEntityAttribute(
@@ -549,16 +522,13 @@ public class MobDictionaryGui extends Screen {
 
         int xStart = originX + 19, yStart = originY + 85, dY = 12, currentY = yStart;
         for (Tuple<String, String> tuple : kvList) {
-            getFont()
-                    .func_238421_b_(
-                            matrixStack, tuple.getA(), originX + 19, currentY, this.stringColor);
-            getFont()
-                    .func_238421_b_(
-                            matrixStack,
-                            tuple.getB(),
-                            xStart + getFont().getStringWidth(tuple.getA()) + 2,
-                            currentY,
-                            this.stringColor);
+            font.drawString(matrixStack, tuple.getA(), originX + 19, currentY, this.stringColor);
+            font.drawString(
+                    matrixStack,
+                    tuple.getB(),
+                    xStart + font.getStringWidth(tuple.getA()) + 2,
+                    currentY,
+                    this.stringColor);
             currentY = dY + currentY;
         }
     }
@@ -568,13 +538,12 @@ public class MobDictionaryGui extends Screen {
                 MobDatas.getRegisteredMobCountOnClient()
                         + "/"
                         + MobDictionary.getEntityManager().getAllMobCount();
-        getFont()
-                .func_238421_b_(
-                        matrixStack,
-                        str,
-                        originX + namesCenterOffsetX - (float) getFont().getStringWidth(str) / 2,
-                        originY + 8,
-                        this.stringColor);
+        font.drawString(
+                matrixStack,
+                str,
+                originX + namesCenterOffsetX - (float) font.getStringWidth(str) / 2,
+                originY + 8,
+                this.stringColor);
 
         if (this.entityTypes.length > 0) {
             for (int i = 0; i < this.entityTypes.length; i++) {
@@ -589,7 +558,7 @@ public class MobDictionaryGui extends Screen {
                 boolean unLock = isUnLock(entityType);
                 String displayName = getDisplayName(entityType, unLock, id);
 
-                int stringWidth = getFont().getStringWidth(displayName);
+                int stringWidth = font.getStringWidth(displayName);
                 int color =
                         var1 == this.currentNo
                                         || isMouseInArea(
@@ -615,15 +584,12 @@ public class MobDictionaryGui extends Screen {
                                                                 + this.stringHeight))
                                 ? 0xffffff
                                 : unLock ? this.stringColor : 0x404040;
-                getFont()
-                        .func_238421_b_(
-                                matrixStack,
-                                displayName,
-                                originX + namesCenterOffsetX - (float) stringWidth / 2,
-                                originY
-                                        + this.topEdge
-                                        + (i * (this.stringHeight + this.stringYMargin)),
-                                color);
+                font.drawString(
+                        matrixStack,
+                        displayName,
+                        originX + namesCenterOffsetX - (float) stringWidth / 2,
+                        originY + this.topEdge + (i * (this.stringHeight + this.stringYMargin)),
+                        color);
             }
         }
     }
@@ -639,9 +605,8 @@ public class MobDictionaryGui extends Screen {
         return displayName;
     }
 
-    // mouseScrolled
     @Override
-    public boolean func_231043_a_(double mouseX, double mouseY, double delta) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
         if (mobBox.isInBox(mouseX, mouseY)) {
             entityScale = (float) delta + entityScale;
             entityScale = Math.max(entityScale, entityMinScale);
@@ -649,7 +614,7 @@ public class MobDictionaryGui extends Screen {
         }
 
         nameListScroll(mouseX, mouseY, delta);
-        return super.func_231043_a_(mouseX, mouseX, delta);
+        return super.mouseScrolled(mouseX, mouseX, delta);
     }
 
     private void nameListScroll(double mouseX, double mouseY, double delta) {
@@ -743,7 +708,9 @@ public class MobDictionaryGui extends Screen {
         if (displayEntity.getType() == EntityType.CREEPER) {
             MobStatusEnum mobStatus = MobStatusEnum.values()[currentMobStatus];
             if (Objects.requireNonNull(mobStatus) == MobStatusEnum.THUNDER) {
-                displayEntity.onStruckByLightning(lightningBolt);
+                displayEntity.func_241841_a(
+                        ServerLifecycleHooks.getCurrentServer().getWorld(Worlds.overworld),
+                        lightningBolt);
                 displayEntity.heal(20);
             }
         }
@@ -759,74 +726,5 @@ public class MobDictionaryGui extends Screen {
     enum MobStatusEnum {
         DEFAULT,
         THUNDER
-    }
-
-    public class MobDictionaryGuiButton extends Button {
-        private final ResourceLocation resourceLocation;
-        private final int xTexStart;
-        private final int yTexStart;
-        private final int yDiffText;
-        private final int textureWidth;
-        private final int textureHeight;
-
-        public MobDictionaryGuiButton(
-                int p_i232261_1_,
-                int p_i232261_2_,
-                int p_i232261_3_,
-                int p_i232261_4_,
-                int p_i232261_5_,
-                int p_i232261_6_,
-                int p_i232261_7_,
-                ResourceLocation p_i232261_8_,
-                int p_i232261_9_,
-                int p_i232261_10_,
-                Button.IPressable p_i232261_11_,
-                ITextComponent p_i232261_12_,
-                Button.ITooltip tooltip) {
-            super(
-                    p_i232261_1_,
-                    p_i232261_2_,
-                    p_i232261_3_,
-                    p_i232261_4_,
-                    p_i232261_12_,
-                    p_i232261_11_,
-                    tooltip);
-            this.textureWidth = p_i232261_9_;
-            this.textureHeight = p_i232261_10_;
-            this.xTexStart = p_i232261_5_;
-            this.yTexStart = p_i232261_6_;
-            this.yDiffText = p_i232261_7_;
-            this.resourceLocation = p_i232261_8_;
-        }
-
-        public void setPosition(int xIn, int yIn) {
-            this.field_230690_l_ = xIn;
-            this.field_230691_m_ = yIn;
-        }
-
-        public void func_230431_b_(
-                MatrixStack p_230431_1_, int p_230431_2_, int p_230431_3_, float p_230431_4_) {
-            Minecraft minecraft = Minecraft.getInstance();
-            minecraft.getTextureManager().bindTexture(this.resourceLocation);
-            int i = this.yTexStart;
-            if (this.func_230449_g_()) {
-                i += this.yDiffText;
-            }
-
-            RenderSystem.enableDepthTest();
-            func_238463_a_(
-                    p_230431_1_,
-                    this.field_230690_l_,
-                    this.field_230691_m_,
-                    (float) this.xTexStart,
-                    (float) i,
-                    this.field_230688_j_,
-                    this.field_230689_k_,
-                    this.textureWidth,
-                    this.textureHeight);
-            if (this.func_230449_g_()) {
-                this.func_230443_a_(p_230431_1_, p_230431_2_, p_230431_3_);
-            }
-        }
     }
 }

@@ -19,6 +19,10 @@ base {
 java {
 	toolchain.languageVersion = JavaLanguageVersion.of(8)
 }
+java {
+	sourceCompatibility = JavaVersion.VERSION_1_8
+	targetCompatibility = JavaVersion.VERSION_1_8
+}
 
 minecraft {
 	// The mappings can be changed at any time and must be in the following format.
