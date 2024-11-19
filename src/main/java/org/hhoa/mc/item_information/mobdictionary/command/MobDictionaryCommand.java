@@ -158,13 +158,11 @@ import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import com.mojang.brigadier.context.StringRange;
-import com.mojang.brigadier.suggestion.Suggestion;
-import com.mojang.brigadier.suggestion.Suggestions;
-import java.util.Collections;
-import java.util.concurrent.CompletableFuture;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import java.util.stream.Stream;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.level.ServerPlayer;
 import org.apache.logging.log4j.Logger;
@@ -178,7 +176,7 @@ public class MobDictionaryCommand {
         LiteralArgumentBuilder<CommandSourceStack> builder =
                 Commands.literal("mobdictionary")
                         .then(
-                                Commands.argument("init", StringArgumentType.word())
+                                Commands.literal("init")
                                         .executes(
                                                 context -> {
                                                     try {
@@ -195,23 +193,18 @@ public class MobDictionaryCommand {
                                                         LOG.error(e);
                                                     }
                                                     return Command.SINGLE_SUCCESS;
-                                                })
-                                        .suggests(
-                                                (context, builder1) -> {
-                                                    Suggestions init =
-                                                            new Suggestions(
-                                                                    StringRange.at(0),
-                                                                    Collections.singletonList(
-                                                                            new Suggestion(
-                                                                                    StringRange.at(
-                                                                                            0),
-                                                                                    "init")));
-                                                    return CompletableFuture.completedFuture(init);
                                                 }))
                         .then(
-                                Commands.argument("unlock", StringArgumentType.word())
+                                Commands.literal("unlock")
                                         .then(
                                                 Commands.argument("all", StringArgumentType.word())
+                                                        .suggests(
+                                                                (context, allSuggestBuilder) ->
+                                                                        SharedSuggestionProvider
+                                                                                .suggest(
+                                                                                        Stream.of(
+                                                                                                "all"),
+                                                                                        allSuggestBuilder))
                                                         .executes(
                                                                 context -> {
                                                                     try {
@@ -229,6 +222,17 @@ public class MobDictionaryCommand {
                                                                     }
                                                                     return Command.SINGLE_SUCCESS;
                                                                 })));
+        builder.requires(
+                builder.getRequirement()
+                        .and(
+                                (c) -> {
+                                    try {
+
+                                        return c.getPlayerOrException().hasPermissions(2);
+                                    } catch (CommandSyntaxException e) {
+                                        throw new RuntimeException(e);
+                                    }
+                                }));
 
         dispatcher.register(builder);
     }

@@ -164,12 +164,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EntityType;
+import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.network.NetworkDirection;
 import org.hhoa.mc.item_information.mobdictionary.MobDictionary;
+import org.hhoa.mc.item_information.mobdictionary.MobDictionaryForgeEventsHandler;
+import org.hhoa.mc.item_information.mobdictionary.capabilities.MobDataCapability;
+import org.hhoa.mc.item_information.mobdictionary.capabilities.MobDataCapabilityImpl;
 import org.hhoa.mc.item_information.mobdictionary.network.EventType;
 import org.hhoa.mc.item_information.mobdictionary.network.PacketHandler;
 import org.hhoa.mc.item_information.mobdictionary.network.packet.syncdata.ClientSyncDataMessage;
@@ -243,20 +245,11 @@ public final class MobDatas {
         if (serverMobNameListMap.containsKey(playerUuid)) {
             mobSavedData = serverMobNameListMap.get(playerUuid);
         } else {
-            MinecraftServer server = serverPlayer.getServer();
-            if (server != null) {
-                ServerLevel overworld = server.overworld();
-                mobSavedData =
-                        overworld
-                                .getDataStorage()
-                                .computeIfAbsent(
-                                        MobSavedData::load,
-                                        MobSavedData::new,
-                                        getMobSavedDataName(playerUuid));
-                serverMobNameListMap.put(playerUuid, mobSavedData);
-            } else {
-                throw new RuntimeException();
-            }
+            LazyOptional<MobDataCapability> capability =
+                    serverPlayer.getCapability(MobDictionaryForgeEventsHandler.MOB_DATA_CAPABILITY);
+            MobDataCapability mobDataCapability = capability.orElseGet(MobDataCapabilityImpl::new);
+            mobSavedData = mobDataCapability.getMobSavedData();
+            serverMobNameListMap.put(playerUuid, mobSavedData);
         }
         return mobSavedData;
     }

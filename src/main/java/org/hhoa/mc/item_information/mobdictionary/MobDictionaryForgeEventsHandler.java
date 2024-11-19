@@ -178,6 +178,8 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import org.hhoa.mc.item_information.EntityInformation;
 import org.hhoa.mc.item_information.mobdictionary.capabilities.FirstLoginCapabilityProvider;
 import org.hhoa.mc.item_information.mobdictionary.capabilities.IFirstLoginCapability;
+import org.hhoa.mc.item_information.mobdictionary.capabilities.MobDataCapability;
+import org.hhoa.mc.item_information.mobdictionary.capabilities.MobDataCapabilityProvider;
 import org.hhoa.mc.item_information.mobdictionary.command.MobDictionaryCommand;
 import org.hhoa.mc.item_information.mobdictionary.data.MobDatas;
 import org.hhoa.mc.item_information.mobdictionary.network.EventType;
@@ -192,8 +194,12 @@ import org.hhoa.mc.item_information.utils.PlayerUtils;
 public class MobDictionaryForgeEventsHandler {
     public static final Capability<IFirstLoginCapability> FIRST_LOGIN_CAPABILITY =
             CapabilityManager.get(new CapabilityToken<>() {});
+    public static final Capability<MobDataCapability> MOB_DATA_CAPABILITY =
+            CapabilityManager.get(new CapabilityToken<>() {});
     public static final ResourceLocation FIRST_LOGIN_CAP =
-            EntityInformation.location("first_login");
+            EntityInformation.location("first_login_capability");
+    public static final ResourceLocation MOB_DATA_CAP =
+            EntityInformation.location("mob_data_capability");
 
     @SubscribeEvent
     public void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
@@ -219,6 +225,7 @@ public class MobDictionaryForgeEventsHandler {
     public void attachCapability(AttachCapabilitiesEvent<Entity> event) {
         if (event.getObject() instanceof ServerPlayer) {
             event.addCapability(FIRST_LOGIN_CAP, new FirstLoginCapabilityProvider());
+            event.addCapability(MOB_DATA_CAP, new MobDataCapabilityProvider());
         }
     }
 

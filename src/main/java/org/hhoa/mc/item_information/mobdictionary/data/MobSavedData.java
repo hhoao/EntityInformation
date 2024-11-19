@@ -161,7 +161,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.world.level.saveddata.SavedData;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -170,32 +169,28 @@ import org.jetbrains.annotations.NotNull;
  * @author xianxing
  * @since 2024/10/29
  */
-public class MobSavedData extends SavedData {
+public class MobSavedData {
     private final Set<String> mobNameSet = new HashSet<>();
+    private final String mobDataKey = "mob_data";
 
-    @Override
-    public @NotNull CompoundTag save(@NotNull CompoundTag compoundTag) {
+    public void load(CompoundTag tag) {
+        ListTag mobData = (ListTag) tag.get(mobDataKey);
+
+        if (mobData != null) {
+            for (Tag mobDatum : mobData) {
+                mobNameSet.add(mobDatum.getAsString());
+            }
+        }
+    }
+
+    public void save(@NotNull CompoundTag compoundTag) {
         ListTag tags = new ListTag();
 
         for (String name : mobNameSet) {
             StringTag nameTag = StringTag.valueOf(name);
             tags.add(nameTag);
         }
-        compoundTag.put("mob_data", tags);
-        return compoundTag;
-    }
-
-    public static MobSavedData load(CompoundTag tag) {
-        ListTag mobData = (ListTag) tag.get("mob_data");
-
-        MobSavedData mobSavedData = new MobSavedData();
-        if (mobData != null) {
-            Set<String> mobNameList = mobSavedData.getMobNameSet();
-            for (Tag mobDatum : mobData) {
-                mobNameList.add(mobDatum.getAsString());
-            }
-        }
-        return mobSavedData;
+        compoundTag.put(mobDataKey, tags);
     }
 
     public Set<String> getMobNameSet() {
@@ -204,18 +199,15 @@ public class MobSavedData extends SavedData {
 
     public void addMobName(String mobName) {
         mobNameSet.add(mobName);
-        this.setDirty(true);
     }
 
     public void addMobNames(Collection<String> mobNames) {
         mobNameSet.addAll(mobNames);
-        this.setDirty(true);
     }
 
     public HashSet<String> clearMobNames() {
         HashSet<String> mobNames = new HashSet<>(mobNameSet);
         mobNameSet.clear();
-        this.setDirty(true);
         return mobNames;
     }
 
@@ -225,11 +217,9 @@ public class MobSavedData extends SavedData {
 
     public void removeMobName(String mobName) {
         mobNameSet.remove(mobName);
-        this.setDirty(true);
     }
 
     public void removeMobNames(Collection<String> mobNames) {
         mobNameSet.removeAll(mobNames);
-        this.setDirty(true);
     }
 }
