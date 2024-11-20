@@ -177,9 +177,7 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.client.resources.language.LanguageManager;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.client.event.ScreenEvent;
@@ -203,7 +201,8 @@ public class ItemTooltipForgeEventsHandler {
     @SubscribeEvent
     public static void onItemTooltip(ItemTooltipEvent event) throws IOException {
         if (Configs.enableItemToolTip) {
-            ResourceLocation registryName = event.getItemStack().getItem().getRegistryName();
+            ResourceLocation registryName =
+                    ForgeRegistries.ITEMS.getKey(event.getItemStack().getItem());
             List<Component> toolTip = event.getToolTip();
             if (registryName != null) {
                 String name = toolTip.get(0).getString();
@@ -219,31 +218,48 @@ public class ItemTooltipForgeEventsHandler {
                                     () -> {
                                         ResourceLocation itemInfoResourceLocation =
                                                 new ResourceLocation(ModInfo.ID, resourcePath);
-                                        if (Minecraft.getInstance()
+                                        Set<Component> descComponent = new HashSet<>();
+                                        Minecraft.getInstance()
                                                 .getResourceManager()
-                                                .hasResource(itemInfoResourceLocation)) {
-                                            Resource resource =
-                                                    Minecraft.getInstance()
-                                                            .getResourceManager()
-                                                            .getResource(itemInfoResourceLocation);
-                                            InputStream inputStream = resource.getInputStream();
-                                            String json =
-                                                    new String(
-                                                            inputStream.readAllBytes(),
-                                                            StandardCharsets.UTF_8);
-                                            ItemInfo itemInfo = gson.fromJson(json, ItemInfo.class);
-                                            Map<String, Set<String>> infos = itemInfo.getInfos();
-                                            Set<Component> descComponent = new HashSet<>();
-                                            descComponent.add(
-                                                    getDescComponent(infos.get("简介"), name));
-                                            descComponent.add(getUseComponent(infos.get("用途")));
-                                            descComponent.add(getGetComponent(infos.get("获取")));
-                                            descComponent.add(
-                                                    getGenerateComponent(infos.get("生成")));
-                                            descComponent.remove(null);
-                                            return descComponent;
-                                        }
-                                        return null;
+                                                .getResource(itemInfoResourceLocation)
+                                                .ifPresent(
+                                                        (resource -> {
+                                                            InputStream inputStream;
+                                                            try {
+                                                                inputStream = resource.open();
+
+                                                                String json =
+                                                                        new String(
+                                                                                inputStream
+                                                                                        .readAllBytes(),
+                                                                                StandardCharsets
+                                                                                        .UTF_8);
+                                                                ItemInfo itemInfo =
+                                                                        gson.fromJson(
+                                                                                json,
+                                                                                ItemInfo.class);
+                                                                Map<String, Set<String>> infos =
+                                                                        itemInfo.getInfos();
+
+                                                                descComponent.add(
+                                                                        getDescComponent(
+                                                                                infos.get("简介"),
+                                                                                name));
+                                                                descComponent.add(
+                                                                        getUseComponent(
+                                                                                infos.get("用途")));
+                                                                descComponent.add(
+                                                                        getGetComponent(
+                                                                                infos.get("获取")));
+                                                                descComponent.add(
+                                                                        getGenerateComponent(
+                                                                                infos.get("生成")));
+                                                                descComponent.remove(null);
+                                                            } catch (IOException e) {
+                                                                throw new RuntimeException(e);
+                                                            }
+                                                        }));
+                                        return descComponent;
                                     });
                 } catch (Exception ignored) {
                 }
@@ -259,34 +275,34 @@ public class ItemTooltipForgeEventsHandler {
         }
     }
 
-    private static TextComponent getGenerateComponent(Set<String> generates) {
+    private static Component getGenerateComponent(Set<String> generates) {
         if (generates != null) {
             String[] array = generates.toArray(String[]::new);
             String str = String.join(",", array);
-            return new TextComponent("生成: " + str);
+            return Component.literal("生成: " + str);
         }
         return null;
     }
 
-    private static TextComponent getGetComponent(Set<String> get) {
+    private static Component getGetComponent(Set<String> get) {
         if (get != null) {
             String[] array = get.toArray(String[]::new);
             String str = String.join(",", array);
-            return new TextComponent("获取途径: " + str);
+            return Component.literal("获取途径: " + str);
         }
         return null;
     }
 
-    private static TextComponent getUseComponent(Set<String> usages) {
+    private static Component getUseComponent(Set<String> usages) {
         if (usages != null) {
             String[] array = usages.toArray(String[]::new);
             String descStr = String.join(",", array);
-            return new TextComponent("用途: " + descStr);
+            return Component.literal("用途: " + descStr);
         }
         return null;
     }
 
-    private static TextComponent getDescComponent(Set<String> descriptions, String realName) {
+    private static Component getDescComponent(Set<String> descriptions, String realName) {
         if (descriptions != null) {
             String singleDesc = null;
             Iterator<String> iterator = descriptions.iterator();
@@ -310,14 +326,13 @@ public class ItemTooltipForgeEventsHandler {
                 String[] array = descriptions.toArray(String[]::new);
                 singleDesc = String.join("\n", array);
             }
-            return new TextComponent(singleDesc);
+            return Component.literal(singleDesc);
         }
         return null;
     }
 
     @SubscribeEvent
-    public static void onKeyboardKeyPressedEventPost(
-            ScreenEvent.KeyboardKeyPressedEvent.Post event) {
+    public static void onKeyboardKeyPressedEventPost(ScreenEvent.KeyPressed.Post event) {
         Screen screen = event.getScreen();
         try {
             if (screen instanceof AbstractContainerScreen) {
@@ -351,7 +366,7 @@ public class ItemTooltipForgeEventsHandler {
 
     public static void openItemSearchWebOnWiki(ItemStack stack) throws IOException {
         LanguageManager languageManager = Minecraft.getInstance().getLanguageManager();
-        String name = languageManager.getSelected().getCode().split("_")[0];
+        String name = languageManager.getSelected().split("_")[0];
         String itemName = I18n.get(stack.getDescriptionId()).replace(" ", "_");
         String apiUrl = String.format("https://%s.minecraft.wiki/w/%s", name, itemName);
         openBrowser(apiUrl);

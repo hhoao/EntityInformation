@@ -152,113 +152,38 @@
  * This Source Code Form is “Incompatible With Secondary Licenses”, as defined by the Mozilla Public License, v. 2.0.
  */
 
-package org.hhoa.mc.item_information.mobdictionary;
+package org.hhoa.mc.item_information.utils;
 
-import com.mojang.brigadier.CommandDispatcher;
-import java.util.Collections;
-import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.CapabilityManager;
-import net.minecraftforge.common.capabilities.CapabilityToken;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.event.AttachCapabilitiesEvent;
-import net.minecraftforge.event.entity.player.AttackEntityEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.entity.player.PlayerInteractEvent;
-import net.minecraftforge.event.server.ServerStartingEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import org.hhoa.mc.item_information.EntityInformation;
-import org.hhoa.mc.item_information.mobdictionary.capabilities.FirstLoginCapabilityProvider;
-import org.hhoa.mc.item_information.mobdictionary.capabilities.IFirstLoginCapability;
-import org.hhoa.mc.item_information.mobdictionary.capabilities.MobDataCapability;
-import org.hhoa.mc.item_information.mobdictionary.capabilities.MobDataCapabilityProvider;
-import org.hhoa.mc.item_information.mobdictionary.command.MobDictionaryCommand;
-import org.hhoa.mc.item_information.mobdictionary.data.MobDatas;
-import org.hhoa.mc.item_information.mobdictionary.network.EventType;
-import org.hhoa.mc.item_information.utils.PlayerUtils;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.network.chat.Component;
+import org.joml.Matrix4f;
 
-/**
- * MobDictionaryForgeEventsHandler
- *
- * @author xianxing
- * @since 2024/10/28
- */
-public class MobDictionaryForgeEventsHandler {
-    public static final Capability<IFirstLoginCapability> FIRST_LOGIN_CAPABILITY =
-            CapabilityManager.get(new CapabilityToken<>() {});
-    public static final Capability<MobDataCapability> MOB_DATA_CAPABILITY =
-            CapabilityManager.get(new CapabilityToken<>() {});
-    public static final ResourceLocation FIRST_LOGIN_CAP =
-            EntityInformation.location("first_login_capability");
-    public static final ResourceLocation MOB_DATA_CAP =
-            EntityInformation.location("mob_data_capability");
-
-    @SubscribeEvent
-    public void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
-        Player player = event.getEntity();
-        if (player instanceof ServerPlayer serverPlayer) {
-            MobDatas.loadMobDataOnServer(serverPlayer);
-            LazyOptional<IFirstLoginCapability> capability =
-                    player.getCapability(MobDictionaryForgeEventsHandler.FIRST_LOGIN_CAPABILITY);
-
-            capability.ifPresent(
-                    cap -> {
-                        if (!cap.hasLoggedIn()) {
-                            ItemStack welcomeItem =
-                                    new ItemStack(MobDictionary.mobDictionary.get(), 1);
-                            PlayerUtils.addItemToPlayer(welcomeItem, player);
-
-                            cap.setHasLoggedIn(true);
-                        }
-                    });
-        }
+public class TextRenderer {
+    public static void drawSimpleText(
+            Font font, GuiGraphics poseStack, String text, float x, float y, int color) {
+        Component component = Component.literal(text);
+        drawSimpleText(font, poseStack, component, x, y, color);
     }
 
-    @SubscribeEvent
-    public void attachCapability(AttachCapabilitiesEvent<Entity> event) {
-        if (event.getObject() instanceof ServerPlayer) {
-            event.addCapability(FIRST_LOGIN_CAP, new FirstLoginCapabilityProvider());
-            event.addCapability(MOB_DATA_CAP, new MobDataCapabilityProvider());
-        }
-    }
+    public static void drawSimpleText(
+            Font font, GuiGraphics poseStack, Component component, float x, float y, int color) {
+        MultiBufferSource.BufferSource bufferSource =
+                Minecraft.getInstance().renderBuffers().bufferSource();
 
-    @SubscribeEvent
-    public void onServerStart(ServerStartingEvent event) {
-        MinecraftServer server = event.getServer();
-        CommandDispatcher<CommandSourceStack> dispatcher = server.getCommands().getDispatcher();
-        MobDictionaryCommand.register(dispatcher);
-        MobDictionary.getEntityManager().loadAllMob(event.getServer());
-    }
-
-    @SubscribeEvent
-    public void onPlayerInteract(PlayerInteractEvent.EntityInteractSpecific event) {
-        if (event.getTarget() instanceof LivingEntity entityLiving) {
-            unLockMobData(entityLiving);
-        }
-    }
-
-    @SubscribeEvent
-    public void onPlayerAttack(AttackEntityEvent event) {
-        Entity target = event.getTarget();
-        unLockMobData(target);
-    }
-
-    private static void unLockMobData(Entity entityLiving) {
-        if (entityLiving != null) {
-            EntityType<?> type = entityLiving.getType();
-            String descriptionId = type.getDescriptionId();
-            EntityManager entityManager = MobDictionary.getEntityManager();
-            if (entityManager.containsName(descriptionId)) {
-                MobDatas.sendSyncDataOnClient(Collections.singleton(descriptionId), EventType.PUT);
-            }
-        }
+        font.drawInBatch(
+                component, // 文本
+                x, // X 坐标
+                y, // Y 坐标
+                color, // 颜色
+                false, // 阴影
+                new Matrix4f(), // PoseStack
+                poseStack.bufferSource(), // 缓冲区
+                Font.DisplayMode.NORMAL, // 渲染模式
+                0, // 背景颜色
+                15728880 // 光照参数
+                );
     }
 }

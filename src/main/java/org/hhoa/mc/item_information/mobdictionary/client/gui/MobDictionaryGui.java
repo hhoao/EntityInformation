@@ -154,9 +154,8 @@
 
 package org.hhoa.mc.item_information.mobdictionary.client.gui;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Vector3f;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -164,8 +163,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.ImageButton;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.LightTexture;
@@ -175,7 +177,7 @@ import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Tuple;
 import net.minecraft.world.entity.Entity;
@@ -199,7 +201,10 @@ import org.hhoa.mc.item_information.mobdictionary.network.MobDictionaryGuiButton
 import org.hhoa.mc.item_information.mobdictionary.network.PacketHandler;
 import org.hhoa.mc.item_information.utils.EntityUtils;
 import org.hhoa.mc.item_information.utils.PlayerUtils;
+import org.hhoa.mc.item_information.utils.TextRenderer;
 import org.jetbrains.annotations.NotNull;
+import org.joml.Matrix4f;
+import org.joml.Quaternionf;
 
 public class MobDictionaryGui extends Screen {
     private static final ResourceLocation dictionaryResource =
@@ -231,8 +236,10 @@ public class MobDictionaryGui extends Screen {
     protected float entityScale = entityInitScale;
     protected double yaw = 0.0D;
     protected double yaw2 = 0.0D;
-    private float rotationX = 0;
-    private float rotationY = 0;
+    private final float initialRotationX = 0;
+    private final float initialRotationY = 0;
+    private float rotationX = initialRotationX;
+    private float rotationY = initialRotationY;
     private boolean isMobDragging;
 
     private static final List<ChatText> tooltipStringList =
@@ -311,6 +318,14 @@ public class MobDictionaryGui extends Screen {
     }
 
     private @NotNull Button getButton(int size) {
+        MutableComponent empty = Component.empty();
+        for (int i = 0; i < tooltipStringList.size(); i++) {
+            if (i != tooltipStringList.size() - 1) {
+                empty.append("\n");
+            }
+            empty.append(tooltipStringList.get(i).getTextComponent());
+        }
+        Tooltip tooltip = Tooltip.create(empty);
         Button convertedPaperButton =
                 new ImageButton(
                         originX + 19,
@@ -324,8 +339,8 @@ public class MobDictionaryGui extends Screen {
                         size,
                         2 * size,
                         this::convertedPaperButtonOnPress,
-                        this::convertedPaperRenderToolTip,
-                        new TextComponent("B"));
+                        Component.literal("B"));
+        convertedPaperButton.setTooltip(tooltip);
         convertedPaperButton.active = this.entityTypes.length > 0;
         return convertedPaperButton;
     }
@@ -355,7 +370,7 @@ public class MobDictionaryGui extends Screen {
                                 new MobDictionaryGuiButtonClickEvent(entityType.getDescriptionId());
                         PacketHandler.CHANNEL.sendToServer(mobDictionaryGuiButtonClickEvent);
                     } else {
-                        player.sendMessage(
+                        player.displayClientMessage(
                                 Texts.NOT_HAVE_ITEM
                                         .withTranslatableTexts(
                                                 I18n.get(Items.PAPER.getDescriptionId())
@@ -363,12 +378,12 @@ public class MobDictionaryGui extends Screen {
                                                         + I18n.get(
                                                                 Items.FEATHER.getDescriptionId()))
                                         .getTextComponent(),
-                                player.getUUID());
+                                false);
                     }
                 } else {
-                    player.sendMessage(
+                    player.displayClientMessage(
                             Texts.UNREGISTER_NOT_EXIST.withTranslatableTexts().getTextComponent(),
-                            player.getUUID());
+                            false);
                 }
             }
         }
@@ -380,33 +395,6 @@ public class MobDictionaryGui extends Screen {
             MobDictionary.getDispatcher().removeEventHandler(eventHandlerId);
         }
         super.onClose();
-    }
-
-    private void convertedPaperRenderToolTip(
-            Button button, PoseStack postStack, int mouseX, int mouseY) {
-        int tooltipX = mouseX + 12;
-        int tooltipY = mouseY - 12;
-
-        int maxWidth = 0;
-        for (ChatText chatMessage : tooltipStringList) {
-            maxWidth =
-                    Math.max(Minecraft.getInstance().font.width(chatMessage.getText()), maxWidth);
-        }
-
-        fill(
-                postStack,
-                tooltipX - 3,
-                tooltipY - 3,
-                tooltipX + 3 + maxWidth + 10,
-                tooltipY + 8 + Minecraft.getInstance().font.lineHeight * tooltipStringList.size(),
-                0xF0100010);
-
-        for (int i = 0; i < tooltipStringList.size(); i++) {
-            Component text = tooltipStringList.get(i).getTextComponent();
-            Minecraft.getInstance()
-                    .font
-                    .draw(postStack, text, tooltipX, tooltipY + i * 10, 0xFFFFFF);
-        }
     }
 
     @Override
@@ -421,7 +409,8 @@ public class MobDictionaryGui extends Screen {
     }
 
     @Override
-    public void render(@NotNull PoseStack matrixStack, int mouseX, int mouseY, float partialTicks) {
+    public void render(
+            @NotNull GuiGraphics matrixStack, int mouseX, int mouseY, float partialTicks) {
         this.yaw2 = this.yaw;
         this.drawGuiBackgroundLayer(matrixStack);
 
@@ -487,20 +476,29 @@ public class MobDictionaryGui extends Screen {
 
     private void initRenderParams() {
         this.entityScale = entityInitScale;
-        this.rotationX = 0;
-        this.rotationY = 0;
+        this.rotationX = initialRotationX;
+        this.rotationY = initialRotationY;
     }
 
-    public void drawGuiBackgroundLayer(PoseStack matrixStack) {
-        RenderSystem.setShaderTexture(0, dictionaryResource);
-        this.blit(matrixStack, originX, originY, 0, 0, this.xSize, this.ySize);
+    public void drawGuiBackgroundLayer(GuiGraphics matrixStack) {
+        matrixStack.blit(dictionaryResource, originX, originY, 0, 0, this.xSize, this.ySize);
     }
 
-    private void drawLockMobInfo(PoseStack matrixStack) {
-        this.font.draw(matrixStack, "??????", originX + 19, originY + 85, this.stringColor);
+    private void drawLockMobInfo(GuiGraphics matrixStack) {
+        this.font.drawInBatch(
+                "??????",
+                originX + 19,
+                originY + 85,
+                this.stringColor,
+                false,
+                new Matrix4f(),
+                matrixStack.bufferSource(),
+                Font.DisplayMode.NORMAL,
+                0,
+                15728880);
     }
 
-    public void drawUnLockMobInfo(PoseStack matrixStack) {
+    public void drawUnLockMobInfo(GuiGraphics matrixStack) {
         List<Tuple<String, String>> kvList = new ArrayList<>();
         kvList.add(
                 new Tuple<>(
@@ -527,8 +525,10 @@ public class MobDictionaryGui extends Screen {
 
         int xStart = originX + 19, yStart = originY + 85, dY = 12, currentY = yStart;
         for (Tuple<String, String> tuple : kvList) {
-            this.font.draw(matrixStack, tuple.getA(), originX + 19, currentY, this.stringColor);
-            this.font.draw(
+            TextRenderer.drawSimpleText(
+                    font, matrixStack, tuple.getA(), originX + 19, currentY, this.stringColor);
+            TextRenderer.drawSimpleText(
+                    font,
                     matrixStack,
                     tuple.getB(),
                     xStart + font.width(tuple.getA()) + 2,
@@ -538,12 +538,13 @@ public class MobDictionaryGui extends Screen {
         }
     }
 
-    public void drawMobNames(PoseStack matrixStack, int mouseX, int mouseY) {
+    public void drawMobNames(GuiGraphics matrixStack, int mouseX, int mouseY) {
         String str =
                 MobDatas.getRegisteredMobCountOnClient()
                         + "/"
                         + MobDictionary.getEntityManager().getAllMobCount();
-        this.font.draw(
+        TextRenderer.drawSimpleText(
+                this.font,
                 matrixStack,
                 str,
                 originX + namesCenterOffsetX - (float) this.font.width(str) / 2,
@@ -589,7 +590,8 @@ public class MobDictionaryGui extends Screen {
                                                                 + this.stringHeight))
                                 ? 0xffffff
                                 : unLock ? this.stringColor : 0x404040;
-                this.font.draw(
+                TextRenderer.drawSimpleText(
+                        this.font,
                         matrixStack,
                         displayName,
                         originX + namesCenterOffsetX - (float) stringWidth / 2,
@@ -662,11 +664,16 @@ public class MobDictionaryGui extends Screen {
 
         PoseStack poseStack = new PoseStack();
         float scale = entityScale;
-        poseStack.translate(originX + 49, originY + 70, 0);
+        poseStack.translate(originX + 49, originY + 70, 10);
         poseStack.scale(scale, scale, scale);
-        poseStack.mulPose(Vector3f.ZP.rotationDegrees(180F));
-        poseStack.mulPose(Vector3f.YP.rotationDegrees(-rotationX)); // X 轴旋转
-        poseStack.mulPose(Vector3f.XP.rotationDegrees(rotationY)); // Y 轴旋转
+        Quaternionf rotationZ = new Quaternionf().rotateAxis((float) Math.toRadians(180), 0, 0, 1);
+        poseStack.mulPose(rotationZ);
+        Quaternionf rotationYq =
+                new Quaternionf().rotateAxis((float) Math.toRadians(-rotationX), 0, 1, 0);
+        poseStack.mulPose(rotationYq);
+        Quaternionf rotationX =
+                new Quaternionf().rotateAxis((float) Math.toRadians(rotationY), 1, 0, 0);
+        poseStack.mulPose(rotationX);
 
         int light;
 

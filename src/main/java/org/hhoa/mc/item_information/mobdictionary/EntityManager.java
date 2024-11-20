@@ -199,9 +199,7 @@ public class EntityManager {
     }
 
     public void addEntityType(EntityType<? extends LivingEntity> entityType) {
-        if (entityType.getRegistryName() != null) {
-            entityTypes.add(entityType);
-        }
+        entityTypes.add(entityType);
     }
 
     public void loadAllMob(MinecraftServer server) {
@@ -210,7 +208,7 @@ public class EntityManager {
         for (Entity allEntity : allEntities) {
             System.out.println(allEntity);
         }
-        for (EntityType<?> entity : ForgeRegistries.ENTITIES) {
+        for (EntityType<?> entity : ForgeRegistries.ENTITY_TYPES) {
             Entity o = entity.create(overworld);
             if (o instanceof Mob) {
                 entityTypes.add((EntityType<? extends LivingEntity>) o.getType());

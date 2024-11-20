@@ -163,7 +163,7 @@ import java.util.stream.Stream;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
-import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import org.apache.logging.log4j.Logger;
 import org.hhoa.mc.item_information.mobdictionary.data.MobDatas;
@@ -186,8 +186,9 @@ public class MobDictionaryCommand {
                                                         MobDatas.clearMobNameOnServer(serverPlayer);
                                                         context.getSource()
                                                                 .sendSuccess(
-                                                                        new TextComponent(
-                                                                                "Init Dictionary successful!"),
+                                                                        () ->
+                                                                                Component.literal(
+                                                                                        "Init Dictionary successful!"),
                                                                         true);
                                                     } catch (Exception e) {
                                                         LOG.error(e);
@@ -214,8 +215,10 @@ public class MobDictionaryCommand {
                                                                                                 .getPlayerOrException());
                                                                         context.getSource()
                                                                                 .sendSuccess(
-                                                                                        new TextComponent(
-                                                                                                "Unlock all successful"),
+                                                                                        () ->
+                                                                                                Component
+                                                                                                        .literal(
+                                                                                                                "Unlock all successful"),
                                                                                         true);
                                                                     } catch (Exception e) {
                                                                         LOG.error(e);

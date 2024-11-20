@@ -208,7 +208,7 @@ public class MobDictionaryGuiButtonClickEvent implements Event {
                             if (player != null
                                     && MobDatas.containsMobNameOnServer(mobName, player)) {
                                 ItemStack mobDataItemStack =
-                                        MobDictionary.mobData.getDefaultInstance();
+                                        MobDictionary.mobData.get().getDefaultInstance();
                                 ItemStack paper = new ItemStack(Items.PAPER, 1);
                                 ItemStack feather = new ItemStack(Items.FEATHER, 1);
                                 if (PlayerUtils.hasItemCount(player, paper)

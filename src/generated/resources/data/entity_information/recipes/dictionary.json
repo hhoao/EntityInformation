@@ -9,11 +9,7 @@
       ],
       "recipe": {
         "type": "minecraft:crafting_shaped",
-        "pattern": [
-          "bs ",
-          "   ",
-          "   "
-        ],
+        "category": "equipment",
         "key": {
           "b": {
             "item": "minecraft:book"
@@ -22,9 +18,15 @@
             "item": "minecraft:spyglass"
           }
         },
+        "pattern": [
+          "bs ",
+          "   ",
+          "   "
+        ],
         "result": {
           "item": "entity_information:dictionary"
-        }
+        },
+        "show_notification": true
       }
     }
   ]

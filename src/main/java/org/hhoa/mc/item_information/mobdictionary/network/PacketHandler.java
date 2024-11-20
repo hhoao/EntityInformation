@@ -182,7 +182,7 @@ public class PacketHandler {
                         RegisterMobMessage.class, messageNumber++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(RegisterMobMessage::encode)
                 .decoder(RegisterMobMessage::decode)
-                .consumer(RegisterMobMessageHandler::handle)
+                .consumerNetworkThread(RegisterMobMessageHandler::handle)
                 .add();
         CHANNEL.messageBuilder(
                         ClientSyncDataMessage.class,
@@ -190,7 +190,7 @@ public class PacketHandler {
                         NetworkDirection.PLAY_TO_SERVER)
                 .encoder(ClientSyncDataMessage::encode)
                 .decoder((buf) -> (ClientSyncDataMessage) SyncDataMessage.decode(buf, false))
-                .consumer(ClientSyncDataMessageHandler::handle)
+                .consumerNetworkThread(ClientSyncDataMessageHandler::handle)
                 .add();
         CHANNEL.messageBuilder(
                         ServerSyncDataMessage.class,
@@ -198,7 +198,7 @@ public class PacketHandler {
                         NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(ServerSyncDataMessage::encode)
                 .decoder((buf) -> (ServerSyncDataMessage) SyncDataMessage.decode(buf, true))
-                .consumer(ServerSyncDataMessageHandler::handle)
+                .consumerNetworkThread(ServerSyncDataMessageHandler::handle)
                 .add();
         CHANNEL.messageBuilder(
                         MobDictionaryGuiButtonClickEvent.class,
@@ -206,7 +206,7 @@ public class PacketHandler {
                         NetworkDirection.PLAY_TO_SERVER)
                 .encoder(MobDictionaryGuiButtonClickEvent::encode)
                 .decoder(MobDictionaryGuiButtonClickEvent::decode)
-                .consumer(MobDictionaryGuiButtonClickEvent::handle)
+                .consumerNetworkThread(MobDictionaryGuiButtonClickEvent::handle)
                 .add();
     }
 

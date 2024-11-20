@@ -157,7 +157,7 @@ package org.hhoa.mc.item_information.mobdictionary.messages;
 import java.util.Arrays;
 import java.util.IllegalFormatException;
 import net.minecraft.locale.Language;
-import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.Component;
 
 public class ChatText {
     protected String text;
@@ -200,8 +200,8 @@ public class ChatText {
         }
     }
 
-    public TextComponent getTextComponent() {
-        return new TextComponent(getText());
+    public Component getTextComponent() {
+        return Component.literal(getText());
     }
 
     @Override

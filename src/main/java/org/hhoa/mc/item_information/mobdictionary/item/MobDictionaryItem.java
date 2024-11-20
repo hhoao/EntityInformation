@@ -157,7 +157,6 @@ package org.hhoa.mc.item_information.mobdictionary.item;
 import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
@@ -208,6 +207,6 @@ public class MobDictionaryItem extends Item {
                         + MobDatas.getRegisteredMobCountOnClient()
                         + '/'
                         + MobDictionary.getEntityManager().getAllMobCount();
-        tooltip.add(new TextComponent(sb));
+        tooltip.add(Component.literal(sb));
     }
 }

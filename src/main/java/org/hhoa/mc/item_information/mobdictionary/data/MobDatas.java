@@ -278,7 +278,7 @@ public final class MobDatas {
         SyncDataMessage syncDataMessage = new ServerSyncDataMessage(names, requestType);
         PacketHandler.CHANNEL.sendTo(
                 syncDataMessage,
-                serverPlayer.connection.getConnection(),
+                serverPlayer.connection.connection,
                 NetworkDirection.PLAY_TO_CLIENT);
     }
 

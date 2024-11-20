@@ -191,12 +191,11 @@ public class ServerSyncDataMessageHandler {
                                 if (player != null
                                         && successMobNames != null
                                         && !successMobNames.isEmpty()) {
-                                    player.sendMessage(
+                                    player.sendSystemMessage(
                                             chatMessage
                                                     .withTranslatableTexts(
                                                             nameList.toArray(new String[0]))
-                                                    .getTextComponent(),
-                                            player.getUUID());
+                                                    .getTextComponent());
                                 }
                             }
                             Dispatcher dispatcher = MobDictionary.getDispatcher();
