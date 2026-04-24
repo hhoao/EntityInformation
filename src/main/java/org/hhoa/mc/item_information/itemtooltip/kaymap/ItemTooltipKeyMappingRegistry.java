@@ -155,7 +155,7 @@
 package org.hhoa.mc.item_information.itemtooltip.kaymap;
 
 import net.minecraft.client.KeyMapping;
-import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
+import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import org.lwjgl.glfw.GLFW;
 
 /**
@@ -164,20 +164,19 @@ import org.lwjgl.glfw.GLFW;
  * @author xianxing
  * @since 2024/10/19
  */
-public class ItemTooltipKeyMappingRegistry {
-    public static KeyMapping searchKeyMapping;
-    public static KeyMapping enableItemTooltipKeyMapping;
-    public static KeyMapping changeSearchEngine;
+public final class ItemTooltipKeyMappingRegistry {
+    public static final KeyMapping SEARCH =
+            new KeyMapping("key.gui.search", GLFW.GLFW_KEY_I, "key.open");
+    public static final KeyMapping TOGGLE_TOOLTIP =
+            new KeyMapping("key.itemtooltip", GLFW.GLFW_KEY_O, "key.open");
+    public static final KeyMapping CHANGE_SEARCH_ENGINE =
+            new KeyMapping("key.change_search_engine", GLFW.GLFW_KEY_K, "key.open");
 
-    public static void registerSearchKeyMapping(RegisterKeyMappingsEvent event) {
-        searchKeyMapping = new KeyMapping("key.gui.search", GLFW.GLFW_KEY_I, "key.open");
-        enableItemTooltipKeyMapping =
-                new KeyMapping("key.itemtooltip", GLFW.GLFW_KEY_O, "key.open");
-        changeSearchEngine =
-                new KeyMapping("key.change_search_engine", GLFW.GLFW_KEY_K, "key.open");
+    private ItemTooltipKeyMappingRegistry() {}
 
-        event.register(searchKeyMapping);
-        event.register(enableItemTooltipKeyMapping);
-        event.register(changeSearchEngine);
+    public static void register(RegisterKeyMappingsEvent event) {
+        event.register(SEARCH);
+        event.register(TOGGLE_TOOLTIP);
+        event.register(CHANGE_SEARCH_ENGINE);
     }
 }

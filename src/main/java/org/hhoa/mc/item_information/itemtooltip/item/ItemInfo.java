@@ -160,8 +160,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class ItemInfo {
-    String name;
-    Map<String, Set<String>> infos;
+    private String name;
+    private Map<String, Set<String>> infos = new HashMap<>();
 
     public ItemInfo() {}
 

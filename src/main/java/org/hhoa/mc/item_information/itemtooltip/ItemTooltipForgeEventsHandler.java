@@ -156,10 +156,8 @@ package org.hhoa.mc.item_information.itemtooltip;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.google.gson.Gson;
 import java.awt.*;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -167,6 +165,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -176,14 +175,14 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.client.resources.language.LanguageManager;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.client.event.ScreenEvent;
-import net.minecraftforge.event.entity.player.ItemTooltipEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.client.event.ScreenEvent;
+import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.Logger;
 import org.hhoa.mc.item_information.ModInfo;
@@ -196,13 +195,13 @@ public class ItemTooltipForgeEventsHandler {
     private static final Logger LOG = LoggerUtils.getLogger(ItemTooltipForgeEventsHandler.class);
     private static final Cache<ResourceLocation, Set<Component>> itemCache =
             CacheBuilder.newBuilder().maximumSize(64).build();
-    public static final Gson gson = new Gson();
+    private static final ItemTooltipService ITEM_TOOLTIP_SERVICE = new ItemTooltipService();
 
     @SubscribeEvent
     public static void onItemTooltip(ItemTooltipEvent event) throws IOException {
         if (Configs.enableItemToolTip) {
             ResourceLocation registryName =
-                    ForgeRegistries.ITEMS.getKey(event.getItemStack().getItem());
+                    BuiltInRegistries.ITEM.getKey(event.getItemStack().getItem());
             List<Component> toolTip = event.getToolTip();
             if (registryName != null) {
                 String name = toolTip.get(0).getString();
@@ -216,54 +215,14 @@ public class ItemTooltipForgeEventsHandler {
                             itemCache.get(
                                     registryName,
                                     () -> {
-                                        ResourceLocation itemInfoResourceLocation =
-                                                new ResourceLocation(ModInfo.ID, resourcePath);
-                                        Set<Component> descComponent = new HashSet<>();
-                                        Minecraft.getInstance()
-                                                .getResourceManager()
-                                                .getResource(itemInfoResourceLocation)
-                                                .ifPresent(
-                                                        (resource -> {
-                                                            InputStream inputStream;
-                                                            try {
-                                                                inputStream = resource.open();
-
-                                                                String json =
-                                                                        new String(
-                                                                                inputStream
-                                                                                        .readAllBytes(),
-                                                                                StandardCharsets
-                                                                                        .UTF_8);
-                                                                ItemInfo itemInfo =
-                                                                        gson.fromJson(
-                                                                                json,
-                                                                                ItemInfo.class);
-                                                                Map<String, Set<String>> infos =
-                                                                        itemInfo.getInfos();
-
-                                                                descComponent.add(
-                                                                        getDescComponent(
-                                                                                infos.get("简介"),
-                                                                                name));
-                                                                descComponent.add(
-                                                                        getUseComponent(
-                                                                                infos.get("用途")));
-                                                                descComponent.add(
-                                                                        getGetComponent(
-                                                                                infos.get("获取")));
-                                                                descComponent.add(
-                                                                        getGenerateComponent(
-                                                                                infos.get("生成")));
-                                                                descComponent.remove(null);
-                                                            } catch (IOException e) {
-                                                                throw new RuntimeException(e);
-                                                            }
-                                                        }));
-                                        return descComponent;
+                                        return ITEM_TOOLTIP_SERVICE
+                                                .tryReadItemInfo(ModInfo.location(resourcePath))
+                                                .map(itemInfo -> buildTooltipComponents(itemInfo, name))
+                                                .orElseGet(Set::of);
                                     });
                 } catch (Exception ignored) {
                 }
-                if (itemInfoComponents != null) {
+                if (itemInfoComponents != null && !itemInfoComponents.isEmpty()) {
                     Component nameComponent = toolTip.remove(0);
                     ArrayList<Component> components = new ArrayList<>(toolTip);
                     toolTip.clear();
@@ -273,6 +232,17 @@ public class ItemTooltipForgeEventsHandler {
                 }
             }
         }
+    }
+
+    private static Set<Component> buildTooltipComponents(ItemInfo itemInfo, String name) {
+        Map<String, Set<String>> infos = itemInfo.getInfos();
+        Set<Component> descComponent = new LinkedHashSet<>();
+        descComponent.add(getDescComponent(infos.get("简介"), name));
+        descComponent.add(getUseComponent(infos.get("用途")));
+        descComponent.add(getGetComponent(infos.get("获取")));
+        descComponent.add(getGenerateComponent(infos.get("生成")));
+        descComponent.remove(null);
+        return descComponent;
     }
 
     private static Component getGenerateComponent(Set<String> generates) {
@@ -336,26 +306,19 @@ public class ItemTooltipForgeEventsHandler {
         Screen screen = event.getScreen();
         try {
             if (screen instanceof AbstractContainerScreen) {
-                if (ItemTooltipKeyMappingRegistry.searchKeyMapping != null
-                        && event.getKeyCode()
-                                == ItemTooltipKeyMappingRegistry.searchKeyMapping
-                                        .getKey()
-                                        .getValue()) {
+                if (event.getKeyCode()
+                        == ItemTooltipKeyMappingRegistry.SEARCH.getKey().getValue()) {
                     Slot slotUnderMouse = ((AbstractContainerScreen<?>) screen).getSlotUnderMouse();
                     if (slotUnderMouse != null) {
                         openItemSearchWeb(slotUnderMouse.getItem());
                     }
-                } else if (ItemTooltipKeyMappingRegistry.enableItemTooltipKeyMapping != null
-                        && event.getKeyCode()
-                                == ItemTooltipKeyMappingRegistry.enableItemTooltipKeyMapping
-                                        .getKey()
-                                        .getValue()) {
+                } else if (event.getKeyCode()
+                        == ItemTooltipKeyMappingRegistry.TOGGLE_TOOLTIP.getKey().getValue()) {
                     Configs.enableItemToolTip = !Configs.enableItemToolTip;
-                } else if (ItemTooltipKeyMappingRegistry.changeSearchEngine != null
-                        && event.getKeyCode()
-                                == ItemTooltipKeyMappingRegistry.changeSearchEngine
-                                        .getKey()
-                                        .getValue()) {
+                } else if (event.getKeyCode()
+                        == ItemTooltipKeyMappingRegistry.CHANGE_SEARCH_ENGINE
+                                .getKey()
+                                .getValue()) {
                     Configs.useWiki = !Configs.useWiki;
                 }
             }
@@ -388,7 +351,7 @@ public class ItemTooltipForgeEventsHandler {
                         StandardCharsets.UTF_8);
         String regName =
                 URLEncoder.encode(
-                        (Objects.requireNonNull(ForgeRegistries.ITEMS.getKey(stack.getItem())))
+                        Objects.requireNonNull(BuiltInRegistries.ITEM.getKey(stack.getItem()))
                                 .toString(),
                         StandardCharsets.UTF_8);
         String displayName =
