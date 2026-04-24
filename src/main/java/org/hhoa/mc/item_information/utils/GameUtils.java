@@ -154,7 +154,8 @@
 
 package org.hhoa.mc.item_information.utils;
 
-import net.minecraftforge.fml.util.thread.SidedThreadGroups;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.fml.loading.FMLEnvironment;
 
 /**
  * ClientUtils
@@ -164,6 +165,6 @@ import net.minecraftforge.fml.util.thread.SidedThreadGroups;
  */
 public class GameUtils {
     public static boolean isOnServer() {
-        return Thread.currentThread().getThreadGroup() == SidedThreadGroups.SERVER;
+        return FMLEnvironment.dist == Dist.DEDICATED_SERVER;
     }
 }

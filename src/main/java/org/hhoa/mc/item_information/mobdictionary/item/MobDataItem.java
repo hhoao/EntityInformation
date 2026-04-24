@@ -155,6 +155,7 @@
 package org.hhoa.mc.item_information.mobdictionary.item;
 
 import java.util.List;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -166,6 +167,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.Level;
 import org.hhoa.mc.item_information.mobdictionary.data.MobDatas;
 import org.hhoa.mc.item_information.mobdictionary.messages.Texts;
@@ -181,14 +183,12 @@ public class MobDataItem extends Item {
     public @NotNull InteractionResultHolder<ItemStack> use(
             @NotNull Level world, Player player, @NotNull InteractionHand hand) {
         ItemStack itemStack = player.getItemInHand(hand);
-        CompoundTag nbt = itemStack.getTag();
-
         String name = "";
         try {
-            if (nbt != null) {
-                name = getEntityNameFromNBT(nbt);
-                if (player instanceof ServerPlayer playerMP) {
-                    if (!MobDatas.containsMobNameOnClient(name)) {
+            if (hasEntityName(itemStack)) {
+                name = getEntityName(itemStack);
+                if (player instanceof ServerPlayer playerMP && !name.isEmpty()) {
+                    if (!MobDatas.containsMobNameOnServer(name, playerMP)) {
                         MobDatas.saveMobNameOnServer(playerMP, name);
                         PlayerUtils.removeSingleItemFromPlayer(player, itemStack.getItem(), 1);
                     } else {
@@ -209,20 +209,26 @@ public class MobDataItem extends Item {
     @Override
     public void appendHoverText(
             ItemStack stack,
-            Level world,
+            Item.TooltipContext tooltipContext,
             @NotNull List<Component> tooltip,
             @NotNull TooltipFlag flag) {
-        CompoundTag nbt = stack.getTag();
-        StringBuilder sb;
-
-        if (nbt != null) {
-            String name = getEntityNameFromNBT(nbt);
-
-            if (!name.isEmpty()) {
-                sb = new StringBuilder().append(Texts.NAME).append(":").append(I18n.get(name));
-                tooltip.add(Component.literal(sb.toString()));
-            }
+        if (hasEntityName(stack)) {
+            String name = getEntityName(stack);
+            StringBuilder sb = new StringBuilder().append(Texts.NAME).append(":").append(I18n.get(name));
+            tooltip.add(Component.literal(sb.toString()));
         }
+    }
+
+    public static String getEntityName(ItemStack stack) {
+        return getEntityNameFromNBT(stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag());
+    }
+
+    public static boolean hasEntityName(ItemStack stack) {
+        return stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).contains("Name");
+    }
+
+    public static void setEntityName(ItemStack stack, String name) {
+        CustomData.update(DataComponents.CUSTOM_DATA, stack, tag -> setEntityNameToNBT(name, tag));
     }
 
     public static String getEntityNameFromNBT(CompoundTag nbt) {

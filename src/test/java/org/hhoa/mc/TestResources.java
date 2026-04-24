@@ -154,15 +154,17 @@
 
 package org.hhoa.mc;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import com.electronwill.nightconfig.core.CommentedConfig;
 import com.electronwill.nightconfig.toml.TomlParser;
-import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URL;
-import java.nio.file.Files;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -174,15 +176,16 @@ import org.junit.jupiter.api.Test;
 public class TestResources {
     @Test
     public void test() throws IOException {
-        URL resource = TestResources.class.getResource("/META-INF/mods.toml");
+        URL resource = TestResources.class.getResource("/META-INF/neoforge.mods.toml");
+        assertNotNull(resource, "generated neoforge.mods.toml should be available to tests");
+
         TomlParser tomlParser = new TomlParser();
         CommentedConfig parse =
-                tomlParser.parse(Files.newBufferedReader(new File(resource.getPath()).toPath()));
-        Set<? extends CommentedConfig.Entry> entries = parse.entrySet();
+                tomlParser.parse(new InputStreamReader(resource.openStream(), StandardCharsets.UTF_8));
         Map<String, Object> config = parse.valueMap();
         List<CommentedConfig> mods = (List<CommentedConfig>) config.get("mods");
         CommentedConfig commentedConfig = mods.get(0);
         String modId = commentedConfig.get("modId");
-        System.out.println(modId);
+        assertEquals("entity_information", modId);
     }
 }

@@ -158,13 +158,13 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
-import net.minecraftforge.registries.ForgeRegistries;
 
 public class EntityManager {
     private final TreeSet<EntityType<? extends LivingEntity>> entityTypes =
@@ -204,17 +204,13 @@ public class EntityManager {
 
     public void loadAllMob(MinecraftServer server) {
         ServerLevel overworld = server.overworld();
-        Iterable<Entity> allEntities = server.overworld().getAllEntities();
-        for (Entity allEntity : allEntities) {
-            System.out.println(allEntity);
-        }
-        for (EntityType<?> entity : ForgeRegistries.ENTITY_TYPES) {
-            Entity o = entity.create(overworld);
-            if (o instanceof Mob) {
-                entityTypes.add((EntityType<? extends LivingEntity>) o.getType());
+        for (EntityType<?> entityType : BuiltInRegistries.ENTITY_TYPE) {
+            Entity entity = entityType.create(overworld);
+            if (entity instanceof Mob mob) {
+                entityTypes.add((EntityType<? extends LivingEntity>) mob.getType());
             }
-            if (o != null) {
-                o.discard();
+            if (entity != null) {
+                entity.discard();
             }
         }
     }

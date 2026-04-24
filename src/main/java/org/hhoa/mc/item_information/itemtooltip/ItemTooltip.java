@@ -13,7 +13,7 @@ public final class ItemTooltip {
             return;
         }
         modBus.register(new ItemTooltipModEventsHandler());
-        NeoForge.EVENT_BUS.register(new ItemTooltipForgeEventsHandler());
+        NeoForge.EVENT_BUS.register(ItemTooltipForgeEventsHandler.class);
     }
 
     static boolean shouldBootstrapClient(Dist dist) {

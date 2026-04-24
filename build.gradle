@@ -107,6 +107,11 @@ neoForge {
             sourceSet(sourceSets.main)
         }
     }
+
+    unitTest {
+        enable()
+        testedMod = mods.getByName(project.mod_id)
+    }
 }
 
 // Sets up a dependency configuration called 'localRuntime'.
@@ -119,6 +124,7 @@ configurations {
 
 dependencies {
     testImplementation "org.junit.jupiter:junit-jupiter:5.11.2"
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
     implementation "org.jsoup:jsoup:1.18.1"
     implementation "com.fasterxml.jackson.core:jackson-databind:2.18.0"
 
@@ -187,6 +193,24 @@ publishing {
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
+}
+
+def junitFmlConfigFile = layout.buildDirectory.file("minecraft-junit/config/fml.toml").get().asFile
+
+test {
+    useJUnitPlatform()
+
+    doFirst {
+        if (junitFmlConfigFile.exists()) {
+            def originalText = junitFmlConfigFile.getText('UTF-8')
+            def patchedText = originalText.replace(
+                    'disableConfigWatcher = false',
+                    'disableConfigWatcher = true')
+            if (patchedText != originalText) {
+                junitFmlConfigFile.setText(patchedText, 'UTF-8')
+            }
+        }
+    }
 }
 
 // IDEA no longer automatically downloads sources/javadoc jars for dependencies, so we need to explicitly enable the behavior.

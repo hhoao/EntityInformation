@@ -1,0 +1,26 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:true"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "b": {
+      "item": "minecraft:book"
+    },
+    "s": {
+      "item": "minecraft:spyglass"
+    }
+  },
+  "pattern": [
+    "bs ",
+    "   ",
+    "   "
+  ],
+  "result": {
+    "count": 1,
+    "id": "entity_information:dictionary"
+  }
+}
