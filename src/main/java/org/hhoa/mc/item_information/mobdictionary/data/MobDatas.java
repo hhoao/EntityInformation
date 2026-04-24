@@ -4,12 +4,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EntityType;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.hhoa.mc.item_information.mobdictionary.MobDictionary;
 import org.hhoa.mc.item_information.mobdictionary.attachment.ModAttachments;
 import org.hhoa.mc.item_information.mobdictionary.network.EventType;
+import org.hhoa.mc.item_information.mobdictionary.network.SyncMobDataPayload;
 
 public final class MobDatas {
     private static final Set<String> CLIENT_MOB_NAMES = new LinkedHashSet<>();
@@ -108,11 +111,12 @@ public final class MobDatas {
     }
 
     public static void sendSyncDataOnClient(Collection<String> names, EventType requestType) {
-        // Task 5 ports the packet layer to payloads.
+        PacketDistributor.sendToServer(new SyncMobDataPayload(List.copyOf(names), requestType));
     }
 
     public static void sendSyncDataMessageOnServer(
             ServerPlayer serverPlayer, Collection<String> names, EventType requestType) {
-        // Task 5 ports the packet layer to payloads.
+        PacketDistributor.sendToPlayer(
+                serverPlayer, new SyncMobDataPayload(List.copyOf(names), requestType));
     }
 }

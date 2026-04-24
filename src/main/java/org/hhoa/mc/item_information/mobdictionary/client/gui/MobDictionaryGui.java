@@ -166,7 +166,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.ImageButton;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.player.LocalPlayer;
@@ -187,9 +186,9 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraftforge.server.ServerLifecycleHooks;
+import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import org.hhoa.mc.item_information.EntityInformation;
-import org.hhoa.mc.item_information.ModInfo;
 import org.hhoa.mc.item_information.framework.Box2D;
 import org.hhoa.mc.item_information.mobdictionary.MobDictionary;
 import org.hhoa.mc.item_information.mobdictionary.data.MobDatas;
@@ -197,9 +196,7 @@ import org.hhoa.mc.item_information.mobdictionary.messages.ChatText;
 import org.hhoa.mc.item_information.mobdictionary.messages.Texts;
 import org.hhoa.mc.item_information.mobdictionary.network.Event;
 import org.hhoa.mc.item_information.mobdictionary.network.EventType;
-import org.hhoa.mc.item_information.mobdictionary.network.MobDictionaryGuiButtonClickEvent;
-import org.hhoa.mc.item_information.mobdictionary.network.PacketHandler;
-import org.hhoa.mc.item_information.utils.EntityUtils;
+import org.hhoa.mc.item_information.mobdictionary.network.MobDictionaryButtonPayload;
 import org.hhoa.mc.item_information.utils.PlayerUtils;
 import org.hhoa.mc.item_information.utils.TextRenderer;
 import org.jetbrains.annotations.NotNull;
@@ -327,20 +324,10 @@ public class MobDictionaryGui extends Screen {
         }
         Tooltip tooltip = Tooltip.create(empty);
         Button convertedPaperButton =
-                new ImageButton(
-                        originX + 19,
-                        originY + 136,
-                        size,
-                        size,
-                        0,
-                        0,
-                        size,
-                        new ResourceLocation(ModInfo.ID, "textures/gui/button.png"),
-                        size,
-                        2 * size,
-                        this::convertedPaperButtonOnPress,
-                        Component.literal("B"));
-        convertedPaperButton.setTooltip(tooltip);
+                Button.builder(Component.literal("B"), this::convertedPaperButtonOnPress)
+                        .bounds(originX + 19, originY + 136, size, size)
+                        .tooltip(tooltip)
+                        .build();
         convertedPaperButton.active = this.entityTypes.length > 0;
         return convertedPaperButton;
     }
@@ -366,9 +353,9 @@ public class MobDictionaryGui extends Screen {
                 if (MobDatas.containsMobNameOnClient(entityType.getDescriptionId())) {
                     if (PlayerUtils.hasItemCount(player, paper)
                             && PlayerUtils.hasItemCount(player, feather)) {
-                        MobDictionaryGuiButtonClickEvent mobDictionaryGuiButtonClickEvent =
-                                new MobDictionaryGuiButtonClickEvent(entityType.getDescriptionId());
-                        PacketHandler.CHANNEL.sendToServer(mobDictionaryGuiButtonClickEvent);
+                        MobDictionaryButtonPayload mobDictionaryButtonPayload =
+                                new MobDictionaryButtonPayload(entityType.getDescriptionId());
+                        PacketDistributor.sendToServer(mobDictionaryButtonPayload);
                     } else {
                         player.displayClientMessage(
                                 Texts.NOT_HAVE_ITEM
@@ -502,26 +489,22 @@ public class MobDictionaryGui extends Screen {
         List<Tuple<String, String>> kvList = new ArrayList<>();
         kvList.add(
                 new Tuple<>(
-                        I18n.get(Attributes.MAX_HEALTH.getDescriptionId()),
+                        I18n.get(Attributes.MAX_HEALTH.value().getDescriptionId()),
                         String.format(":%.1f", displayEntity.getMaxHealth())));
         kvList.add(
                 new Tuple<>(
-                        I18n.get(Attributes.ARMOR.getDescriptionId()),
+                        I18n.get(Attributes.ARMOR.value().getDescriptionId()),
                         String.format(":%d", displayEntity.getArmorValue())));
         kvList.add(
                 new Tuple<>(
-                        I18n.get(Attributes.ATTACK_DAMAGE.getDescriptionId()),
-                        String.format(
-                                ":%.1f",
-                                EntityUtils.getEntityAttribute(
-                                        displayEntity, Attributes.ATTACK_DAMAGE))));
+                        I18n.get(Attributes.ATTACK_DAMAGE.value().getDescriptionId()),
+                        String.format(":%.1f", displayEntity.getAttributeValue(Attributes.ATTACK_DAMAGE))));
         kvList.add(
                 new Tuple<>(
-                        I18n.get(Attributes.MOVEMENT_SPEED.getDescriptionId()),
+                        I18n.get(Attributes.MOVEMENT_SPEED.value().getDescriptionId()),
                         String.format(
                                 ":%.1f",
-                                EntityUtils.getEntityAttribute(
-                                        displayEntity, Attributes.MOVEMENT_SPEED))));
+                                displayEntity.getAttributeValue(Attributes.MOVEMENT_SPEED))));
 
         int xStart = originX + 19, yStart = originY + 85, dY = 12, currentY = yStart;
         for (Tuple<String, String> tuple : kvList) {
@@ -612,15 +595,15 @@ public class MobDictionaryGui extends Screen {
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
         if (mobBox.isInBox(mouseX, mouseY)) {
-            entityScale = (float) delta + entityScale;
+            entityScale = (float) scrollY + entityScale;
             entityScale = Math.max(entityScale, entityMinScale);
             entityScale = Math.min(entityScale, entityMaxScale);
         }
 
-        nameListScroll(mouseX, mouseY, delta);
-        return super.mouseScrolled(mouseX, mouseX, delta);
+        nameListScroll(mouseX, mouseY, scrollY);
+        return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
     }
 
     private void nameListScroll(double mouseX, double mouseY, double delta) {
@@ -718,7 +701,8 @@ public class MobDictionaryGui extends Screen {
     private void setEntityStatus() {
         if (displayEntity.getType() == EntityType.CREEPER) {
             MobStatusEnum mobStatus = MobStatusEnum.values()[currentMobStatus];
-            if (Objects.requireNonNull(mobStatus) == MobStatusEnum.THUNDER) {
+            if (Objects.requireNonNull(mobStatus) == MobStatusEnum.THUNDER
+                    && ServerLifecycleHooks.getCurrentServer() != null) {
                 displayEntity.thunderHit(
                         ServerLifecycleHooks.getCurrentServer().overworld(), lightningBolt);
                 displayEntity.heal(20);

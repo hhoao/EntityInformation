@@ -154,14 +154,16 @@
 
 package org.hhoa.mc.item_information.mobdictionary;
 
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.CustomData;
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.data.event.GatherDataEvent;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
-import org.hhoa.mc.item_information.mobdictionary.network.PacketHandler;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+import org.hhoa.mc.item_information.mobdictionary.network.MobDictionaryPayloads;
 import org.hhoa.mc.item_information.mobdictionary.recipes.MobDictionaryRecipeProvider;
 
 /**
@@ -172,14 +174,15 @@ import org.hhoa.mc.item_information.mobdictionary.recipes.MobDictionaryRecipePro
  */
 public class MobDictionaryFMLEventsHandler {
     @SubscribeEvent
-    public void preInit(FMLCommonSetupEvent event) {
-        PacketHandler.registerMessages();
+    public void registerPayloadHandlers(RegisterPayloadHandlersEvent event) {
+        MobDictionaryPayloads.register(event);
     }
 
     @SubscribeEvent
     public void onGatherData(GatherDataEvent event) {
         MobDictionaryRecipeProvider myRecipeProvider =
-                new MobDictionaryRecipeProvider(event.getGenerator().getPackOutput());
+                new MobDictionaryRecipeProvider(
+                        event.getGenerator().getPackOutput(), event.getLookupProvider());
         event.getGenerator().addProvider(true, myRecipeProvider);
     }
 
@@ -192,7 +195,7 @@ public class MobDictionaryFMLEventsHandler {
                 ItemStack item = new ItemStack(MobDictionary.mobData.get());
                 CompoundTag nbt = new CompoundTag();
                 nbt.putString("Name", name);
-                item.setTag(nbt);
+                item.set(DataComponents.CUSTOM_DATA, CustomData.of(nbt));
                 event.accept(item);
             }
         }
