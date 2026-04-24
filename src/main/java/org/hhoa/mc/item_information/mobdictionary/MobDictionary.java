@@ -10,6 +10,7 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.hhoa.mc.item_information.ModInfo;
+import org.hhoa.mc.item_information.mobdictionary.attachment.ModAttachments;
 import org.hhoa.mc.item_information.mobdictionary.network.Dispatcher;
 import org.hhoa.mc.item_information.registry.ModItems;
 
@@ -33,6 +34,7 @@ public final class MobDictionary {
         modBus.register(new MobDictionaryFMLEventsHandler());
         NeoForge.EVENT_BUS.register(new MobDictionaryForgeEventsHandler());
         RECIPE_SERIALIZERS.register(modBus);
+        ModAttachments.register(modBus);
         ModItems.register(modBus);
     }
 

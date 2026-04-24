@@ -157,12 +157,10 @@ package org.hhoa.mc.item_information.mobdictionary;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
-import net.minecraftforge.data.event.GatherDataEvent;
-import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import org.hhoa.mc.item_information.mobdictionary.capabilities.IFirstLoginCapability;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.neoforge.data.event.GatherDataEvent;
+import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import org.hhoa.mc.item_information.mobdictionary.network.PacketHandler;
 import org.hhoa.mc.item_information.mobdictionary.recipes.MobDictionaryRecipeProvider;
 
@@ -183,11 +181,6 @@ public class MobDictionaryFMLEventsHandler {
         MobDictionaryRecipeProvider myRecipeProvider =
                 new MobDictionaryRecipeProvider(event.getGenerator().getPackOutput());
         event.getGenerator().addProvider(true, myRecipeProvider);
-    }
-
-    @SubscribeEvent
-    public void registerCapabilities(RegisterCapabilitiesEvent event) {
-        event.register(IFirstLoginCapability.class);
     }
 
     @SubscribeEvent
