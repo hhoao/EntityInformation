@@ -16,9 +16,12 @@ class TemplateResourceTest {
         assertNotNull(resource, "generated neoforge.mods.toml should be on the test classpath");
 
         String text = new String(resource.openStream().readAllBytes(), StandardCharsets.UTF_8);
-        assertTrue(text.contains("modId=\"entity_information\""));
-        assertTrue(text.contains("displayName=\"EntityInformation\""));
-        assertTrue(text.contains("modId=\"neoforge\""));
+        assertTrue(text.contains("modId = \"entity_information\""));
+        assertTrue(text.contains("displayName = \"EntityInformation\""));
+        assertTrue(text.contains("modId = \"neoforge\""));
+        assertTrue(text.contains("loaderVersion = \"[4,)\""));
+        assertTrue(text.contains("versionRange = \"[21,)\""));
+        assertTrue(text.contains("versionRange = \"[1.21.8,1.22)\""));
         assertEquals(-1, text.indexOf("examplemod"), "template placeholders must be removed");
     }
 }
