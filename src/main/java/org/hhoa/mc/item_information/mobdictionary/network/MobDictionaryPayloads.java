@@ -1,7 +1,6 @@
 package org.hhoa.mc.item_information.mobdictionary.network;
 
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
-import net.neoforged.neoforge.network.handling.DirectionalPayloadHandler;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 public final class MobDictionaryPayloads {
@@ -14,9 +13,8 @@ public final class MobDictionaryPayloads {
         registrar.playBidirectional(
                 SyncMobDataPayload.TYPE,
                 SyncMobDataPayload.STREAM_CODEC,
-                new DirectionalPayloadHandler<>(
-                        MobDictionaryPayloadHandlers::handleSyncMobDataOnClient,
-                        MobDictionaryPayloadHandlers::handleSyncMobDataOnServer));
+                MobDictionaryPayloadHandlers::handleSyncMobDataOnServer,
+                MobDictionaryPayloadHandlers::handleSyncMobDataOnClient);
         registrar.playToServer(
                 MobDictionaryButtonPayload.TYPE,
                 MobDictionaryButtonPayload.STREAM_CODEC,

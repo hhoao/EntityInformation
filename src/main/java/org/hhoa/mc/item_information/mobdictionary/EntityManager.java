@@ -162,6 +162,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -205,7 +206,7 @@ public class EntityManager {
     public void loadAllMob(MinecraftServer server) {
         ServerLevel overworld = server.overworld();
         for (EntityType<?> entityType : BuiltInRegistries.ENTITY_TYPE) {
-            Entity entity = entityType.create(overworld);
+            Entity entity = entityType.create(overworld, EntitySpawnReason.COMMAND);
             if (entity instanceof Mob mob) {
                 entityTypes.add((EntityType<? extends LivingEntity>) mob.getType());
             }

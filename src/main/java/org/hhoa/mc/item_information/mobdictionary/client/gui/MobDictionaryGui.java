@@ -167,18 +167,20 @@ import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Tuple;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import org.hhoa.mc.item_information.EntityInformation;
 import org.hhoa.mc.item_information.framework.Box2D;
 import org.hhoa.mc.item_information.mobdictionary.MobDictionary;
@@ -261,7 +263,11 @@ public class MobDictionaryGui extends Screen {
                                 this::processMobDictionaryGuiButtonClickEventCallBack));
         Button convertedPaperButton = getButton(8);
 
-        lightningBolt = EntityType.LIGHTNING_BOLT.create(Minecraft.getInstance().level);
+        if (Minecraft.getInstance().level != null) {
+            lightningBolt =
+                    EntityType.LIGHTNING_BOLT.create(
+                            Minecraft.getInstance().level, EntitySpawnReason.COMMAND);
+        }
         this.addRenderableWidget(convertedPaperButton);
     }
 
@@ -347,7 +353,7 @@ public class MobDictionaryGui extends Screen {
                             && PlayerUtils.hasItemCount(player, feather)) {
                         MobDictionaryButtonPayload mobDictionaryButtonPayload =
                                 new MobDictionaryButtonPayload(entityType.getDescriptionId());
-                        PacketDistributor.sendToServer(mobDictionaryButtonPayload);
+                        ClientPacketDistributor.sendToServer(mobDictionaryButtonPayload);
                     } else {
                         player.displayClientMessage(
                                 Texts.NOT_HAVE_ITEM
@@ -420,7 +426,7 @@ public class MobDictionaryGui extends Screen {
     }
 
     @Override
-    protected void renderBlurredBackground(float partialTick) {
+    protected void renderBlurredBackground(GuiGraphics guiGraphics) {
         // NeoForge 1.21 screens default to a menu blur backdrop. The dictionary keeps its own
         // translucent overlay so the book and text stay crisp when compatibility layers call
         // Screen background hooks.
@@ -479,7 +485,17 @@ public class MobDictionaryGui extends Screen {
     }
 
     public void drawGuiBackgroundLayer(GuiGraphics matrixStack) {
-        matrixStack.blit(dictionaryResource, originX, originY, 0, 0, this.xSize, this.ySize);
+        matrixStack.blit(
+                RenderPipelines.GUI_TEXTURED,
+                dictionaryResource,
+                originX,
+                originY,
+                0.0F,
+                0.0F,
+                this.xSize,
+                this.ySize,
+                this.xSize,
+                this.ySize);
     }
 
     private void drawLockMobInfo(GuiGraphics matrixStack) {
@@ -671,8 +687,10 @@ public class MobDictionaryGui extends Screen {
 
             InventoryScreen.renderEntityInInventory(
                     matrixStack,
-                    originX + 49.0F,
-                    originY + 70.0F,
+                    originX + 49,
+                    originY + 70,
+                    (int) (mobBox.getMaxX() - mobBox.getMinX()),
+                    (int) (mobBox.getMaxY() - mobBox.getMinY()),
                     entityScale,
                     translation,
                     rotationZ,
@@ -714,7 +732,12 @@ public class MobDictionaryGui extends Screen {
                 if (displayEntity != null) {
                     displayEntity.discard();
                 }
-                displayEntity = (LivingEntity) entityResourceLocation.create(this.minecraft.level);
+                displayEntity =
+                        this.minecraft.level == null
+                                ? null
+                                : (LivingEntity)
+                                        entityResourceLocation.create(
+                                                this.minecraft.level, EntitySpawnReason.COMMAND);
             }
             setEntityStatus();
         }
@@ -724,7 +747,8 @@ public class MobDictionaryGui extends Screen {
         if (displayEntity.getType() == EntityType.CREEPER) {
             MobStatusEnum mobStatus = MobStatusEnum.values()[currentMobStatus];
             if (mobStatus == MobStatusEnum.THUNDER
-                    && Minecraft.getInstance().getSingleplayerServer() != null) {
+                    && Minecraft.getInstance().getSingleplayerServer() != null
+                    && lightningBolt != null) {
                 displayEntity.thunderHit(
                         Minecraft.getInstance().getSingleplayerServer().overworld(),
                         lightningBolt);

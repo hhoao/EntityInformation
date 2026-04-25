@@ -15,7 +15,7 @@ class MobDictionaryGuiBackgroundTest {
                         .getDeclaringClass());
         assertEquals(
                 MobDictionaryGui.class,
-                declaredMethod("renderBlurredBackground", float.class).getDeclaringClass());
+                declaredMethod("renderBlurredBackground", GuiGraphics.class).getDeclaringClass());
         assertEquals(
                 MobDictionaryGui.class,
                 declaredMethod("renderTransparentBackground", GuiGraphics.class).getDeclaringClass());

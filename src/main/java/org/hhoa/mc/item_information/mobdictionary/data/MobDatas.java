@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Set;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EntityType;
+import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.hhoa.mc.item_information.mobdictionary.MobDictionary;
 import org.hhoa.mc.item_information.mobdictionary.attachment.ModAttachments;
@@ -111,7 +112,8 @@ public final class MobDatas {
     }
 
     public static void sendSyncDataOnClient(Collection<String> names, EventType requestType) {
-        PacketDistributor.sendToServer(new SyncMobDataPayload(List.copyOf(names), requestType));
+        ClientPacketDistributor.sendToServer(
+                new SyncMobDataPayload(List.copyOf(names), requestType));
     }
 
     public static void sendSyncDataMessageOnServer(

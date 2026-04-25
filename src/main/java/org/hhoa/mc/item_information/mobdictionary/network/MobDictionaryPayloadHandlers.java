@@ -39,10 +39,11 @@ public final class MobDictionaryPayloadHandlers {
                 && !successMobNames.isEmpty()) {
             ChatText chatMessage =
                     payload.requestType() == EventType.PUT ? Texts.ACCEPT : Texts.UNREGISTER;
-            player.sendSystemMessage(
+            player.displayClientMessage(
                     chatMessage
                             .withTranslatableTexts(payload.mobNames().toArray(new String[0]))
-                            .getTextComponent());
+                            .getTextComponent(),
+                    false);
         }
 
         MobDictionary.getDispatcher().process(payload);
