@@ -58,11 +58,11 @@ This ledger seeds the 1.21 validation work from the `remotes/origin/v1.20.x` sou
 - `1.20 来源`: `src/main/java/org/hhoa/mc/item_information/itemtooltip/ItemTooltip.java`, `src/main/java/org/hhoa/mc/item_information/itemtooltip/ItemTooltipForgeEventsHandler.java`, `src/main/java/org/hhoa/mc/item_information/itemtooltip/ItemTooltipModEventsHandler.java`, `src/main/java/org/hhoa/mc/item_information/itemtooltip/item/ItemInfo.java`, `src/main/java/org/hhoa/mc/item_information/itemtooltip/kaymap/ItemTooltipKeyMappingRegistry.java`, `src/main/java/org/hhoa/mc/item_information/itemtooltip/parser/ItemInfoParser.java`, `src/main/java/org/hhoa/mc/item_information/itemtooltip/item/TAG.java`
 - `1.21 对应实现`: `M src/main/java/org/hhoa/mc/item_information/itemtooltip/ItemTooltip.java`, `M src/main/java/org/hhoa/mc/item_information/itemtooltip/ItemTooltipForgeEventsHandler.java`, `M src/main/java/org/hhoa/mc/item_information/itemtooltip/ItemTooltipModEventsHandler.java`, `A src/main/java/org/hhoa/mc/item_information/itemtooltip/ItemTooltipService.java`, `M src/main/java/org/hhoa/mc/item_information/itemtooltip/item/ItemInfo.java`, `M src/main/java/org/hhoa/mc/item_information/itemtooltip/kaymap/ItemTooltipKeyMappingRegistry.java`
 - `预期行为`: 物品提示解析、格式化和按键开关行为在拆分出 `ItemTooltipService` 后仍保持与 1.20.x 一致。
-- `当前状态`: `Pending`
-- `发现的问题`: 服务拆分是当前 diff 的核心变化，但尚未确认事件处理器、按键映射和解析器之间的职责边界是否与旧行为一致。
-- `修复动作`: 对照旧实现检查服务调用链，必要时补齐事件到服务的委派或修正 key mapping 注册时机。
-- `验证方式`: 运行 `./gradlew test --tests org.hhoa.mc.item_information.itemtooltip.ItemTooltipTest --tests org.hhoa.mc.item_information.itemtooltip.ItemTooltipServiceTest`，并在客户端手动检查提示开关。
-- `结论`: 先作为待验证条目保留，确认服务拆分没有行为漂移后再标记。
+- `当前状态`: `Checking`
+- `发现的问题`: 服务拆分后的事件挂接、按键注册和资源解析链路在静态对照里没有发现真实偏差；`ItemTooltipServiceTest` 当前只覆盖了 `granite.json` 的解析，`ItemTooltipTest` 覆盖了仅在 `Dist.CLIENT` 下执行 bootstrap 的分支。但本轮没有记录到可复核的 `runClient` 手动 tooltip smoke 证据，因此还不能把该条目收口为完整 `Verified`。
+- `修复动作`: 无需生产代码修复；保留当前 NeoForge 1.21 拆分实现，并补记该条目仍待 in-game tooltip smoke。
+- `验证方式`: 已运行 `./gradlew test --tests org.hhoa.mc.item_information.itemtooltip.ItemTooltipServiceTest --tests org.hhoa.mc.item_information.itemtooltip.ItemTooltipTest --console plain`，确认 focused tests 通过。后续仍需在可交互客户端环境中执行 `runClient` 并手动确认 tooltip 展示、按键切换与资源加载。
+- `结论`: 目前只完成了自动化 parsing/bootstrap parity 证据回填；真实 in-game tooltip smoke 仍待补做，所以条目保持 `Checking`。
 
 ## mobdictionary
 ### Entry 1: 数据与网络迁移总览
@@ -88,13 +88,13 @@ This ledger seeds the 1.21 validation work from the `remotes/origin/v1.20.x` sou
 ## resources
 ### Entry 1: 运行时资源与语言文件验证
 - `1.20 来源`: `src/main/resources/assets/entity_information/lang/en_us.json`, `src/main/resources/assets/entity_information/lang/zh_cn.json`, `src/main/resources/assets/entity_information/item_infos/minecraft/*.json`, `src/main/resources/assets/entity_information/models/item/*.json`, `src/main/resources/assets/entity_information/textures/gui/*`, `src/main/resources/assets/entity_information/textures/item/*`
-- `1.21 对应实现`: `M src/main/resources/assets/entity_information/lang/en_us.json`, `M src/main/resources/assets/entity_information/lang/zh_cn.json`, `src/main/resources/assets/entity_information/item_infos/minecraft/*.json`, `src/main/resources/assets/entity_information/models/item/*.json`, `src/main/resources/assets/entity_information/textures/gui/*`, `src/main/resources/assets/entity_information/textures/item/*`
+- `1.21 对应实现`: `src/main/resources/assets/entity_information/lang/en_us.json`, `src/main/resources/assets/entity_information/lang/zh_cn.json`, `src/main/resources/assets/entity_information/item_infos/minecraft/*.json`, `src/main/resources/assets/entity_information/models/item/*.json`, `src/main/resources/assets/entity_information/textures/gui/*`, `src/main/resources/assets/entity_information/textures/item/*`
 - `预期行为`: 语言键、模型、纹理和 `item_infos` 数据在 1.21 运行时仍应按旧路径解析，不引入缺失资源或错误键名。
-- `当前状态`: `Pending`
-- `发现的问题`: 语言文件已变化，但尚未确认新增或迁移后的键是否与代码中的翻译键和资源引用完全匹配。
-- `修复动作`: 在首轮验证中对照代码引用检查资源命名，必要时修正语言键、模型引用或缺失纹理。
-- `验证方式`: 运行客户端并检查资源加载日志，同时手动打开相关物品和界面确认资源解析正常。
-- `结论`: 资源层先保持待验证状态，待运行时检查后更新。
+- `当前状态`: `Checking`
+- `发现的问题`: 对照 `remotes/origin/v1.20.x` 后，当前资源树没有暴露出需要立即回滚的静态差异；`granite.json` 也仍能被服务层按预期解析。但这只能证明单个 `item_info` 样本和自动化加载路径可用，不能据此把整个 `item_infos` / `lang` / model / texture 运行时资源面宽泛地标成 `Accepted Diff`。
+- `修复动作`: 无需资源修复；把条目收窄回真实状态，等待可交互客户端环境下的 runtime resource smoke。
+- `验证方式`: 已通过 `ItemTooltipServiceTest` 解析 `assets/entity_information/item_infos/minecraft/granite.json`，并复核当前资源树与 `v1.20.x` 的静态对照。后续仍需运行客户端并手动检查 tooltip、语言键、模型与纹理的实际加载。
+- `结论`: 现阶段只有有限的静态与自动化资源证据，尚不足以接受整个资源层 diff，因此条目回退为 `Checking`。
 
 ## generated resources
 ### Entry 1: 数据生成目录重排验证
