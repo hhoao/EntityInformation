@@ -126,8 +126,6 @@ dependencies {
     testImplementation "org.junit.jupiter:junit-jupiter:5.11.2"
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
     implementation "org.jsoup:jsoup:1.18.1"
-    implementation "com.fasterxml.jackson.core:jackson-databind:2.18.0"
-
     // Example optional mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
     // compileOnly "mezz.jei:jei-${mc_version}-common-api:${jei_version}"
