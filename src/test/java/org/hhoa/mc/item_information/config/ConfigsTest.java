@@ -13,11 +13,7 @@ class ConfigsTest {
     }
 
     @Test
-    void syncFromConfigUsesDefaultsBeforeConfigLoads() {
-        Configs.applyCompatibilityValues(false, false);
-
-        Configs.syncFromConfig();
-
+    void exposesDefaultCompatibilityFlagsBeforeConfigLoads() {
         assertTrue(Configs.enableItemToolTip);
         assertTrue(Configs.useWiki);
     }
@@ -27,6 +23,16 @@ class ConfigsTest {
         Configs.applyCompatibilityValues(false, true);
 
         assertFalse(Configs.enableItemToolTip);
+        assertTrue(Configs.useWiki);
+    }
+
+    @Test
+    void syncFromConfigUsesDefaultsBeforeConfigLoads() {
+        Configs.applyCompatibilityValues(false, false);
+
+        Configs.syncFromConfig();
+
+        assertTrue(Configs.enableItemToolTip);
         assertTrue(Configs.useWiki);
     }
 }

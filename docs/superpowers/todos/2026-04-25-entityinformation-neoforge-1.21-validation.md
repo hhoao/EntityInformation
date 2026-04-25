@@ -15,22 +15,22 @@ This ledger seeds the 1.21 validation work from the `remotes/origin/v1.20.x` sou
 - `1.20 来源`: `build.gradle`, `gradle.properties`, `settings.gradle`, `gradlew`, `gradlew.bat`, `gradle/wrapper/gradle-wrapper.jar`, `gradle/wrapper/gradle-wrapper.properties`, `src/main/resources/META-INF/mods.toml`
 - `1.21 对应实现`: `M build.gradle`, `M gradle.properties`, `M settings.gradle`, `M gradlew`, `M gradlew.bat`, `M gradle/wrapper/gradle-wrapper.jar`, `M gradle/wrapper/gradle-wrapper.properties`, `A src/main/templates/META-INF/neoforge.mods.toml`, `D src/main/resources/META-INF/mods.toml`
 - `预期行为`: NeoForge 1.21 构建脚本应继续解析模组元数据，模板化 `neoforge.mods.toml` 应替代旧的 `mods.toml`，打包流程不再依赖旧路径。
-- `当前状态`: `Pending`
-- `发现的问题`: 当前只完成了源树和 diff 编目，尚未确认模板展开、资源打包和 Gradle 属性迁移是否完全一致。
-- `修复动作`: 首轮验证时检查 `processResources`、模组元数据注入和发行物内容；若仍引用旧 `mods.toml`，补齐构建脚本或模板参数。
-- `验证方式`: 先运行 `./gradlew --version` 确认 wrapper 与 Gradle 版本正常，再运行 `./gradlew compileJava`、`./gradlew test`、`./gradlew build` 与 `./gradlew processResources`，并检查生成产物中的 NeoForge 模组元数据文件。
-- `结论`: 作为首轮验证入口保留，待构建检查后再更新为 `Verified` 或 `Accepted Diff`。
+- `当前状态`: `Verified`
+- `发现的问题`: 构建脚本已迁移到 NeoForge 1.21 的预期形态；本轮需要补齐真实构建证据，确认模板化 mod metadata 不只是配置存在，而是实际进入构建输出。
+- `修复动作`: 保留现有 NeoForge 构建配置，并补跑完整构建链与资源检查，确认 `neoforge.mods.toml` 被生成并打包。
+- `验证方式`: 运行 `./gradlew compileJava --console plain`、`./gradlew processResources --console plain`、`./gradlew test --tests org.hhoa.mc.item_information.ModInfoTest --tests org.hhoa.mc.item_information.config.ConfigsTest --tests org.hhoa.mc.item_information.framework.Box2DTest --console plain`、`./gradlew build --console plain`；随后确认 `build/resources/main/META-INF/neoforge.mods.toml` 存在，且 `jar tf build/libs/entity_information-1.0.jar` 包含 `META-INF/neoforge.mods.toml`。
+- `结论`: 上述构建与产物检查均已通过，`neoforge.mods.toml` 已生成并进入 jar，构建与元数据迁移条目更新为 `Verified`。
 
 ## 入口与配置
 ### Entry 1: 模组入口、配置与注册挂接
 - `1.20 来源`: `src/main/java/org/hhoa/mc/item_information/EntityInformation.java`, `src/main/java/org/hhoa/mc/item_information/ModInfo.java`, `src/main/java/org/hhoa/mc/item_information/config/Configs.java`
 - `1.21 对应实现`: `M src/main/java/org/hhoa/mc/item_information/EntityInformation.java`, `M src/main/java/org/hhoa/mc/item_information/ModInfo.java`, `M src/main/java/org/hhoa/mc/item_information/config/Configs.java`, `A src/main/java/org/hhoa/mc/item_information/registry/ModItems.java`, `A src/main/java/org/hhoa/mc/item_information/mobdictionary/attachment/ModAttachments.java`
 - `预期行为`: 模组入口应完成配置注册、物品注册和附件初始化，NeoForge 1.21 下的启动顺序需要与 1.20.x 功能面保持一致。
-- `当前状态`: `Pending`
-- `发现的问题`: 入口代码已经迁移到新的物品注册和附件挂接路径，但尚未验证事件总线、配置加载和附件初始化是否按预期发生。
-- `修复动作`: 首轮检查入口构造函数和注册调用链，必要时补齐缺失的注册调用或调整初始化顺序。
-- `验证方式`: 运行启动检查，并执行 `ModInfoTest` 与 `ConfigsTest`，确认配置、物品和附件注册都被触发。
-- `结论`: 先作为迁移检查清单保留，待启动验证完成后再定性。
+- `当前状态`: `Accepted Diff`
+- `发现的问题`: `EntityInformation` 的 bootstrap 链可以通过静态审查确认已接上 NeoForge 1.21 的入口与配置路径，但本轮并未执行真实模组启动，不能把物品注册、附件注册和运行时事件挂接表述成已做过 runtime 验证。
+- `修复动作`: 保持当前入口实现不变，并把结论限定为静态 bootstrap/config audit 已通过；运行时注册结果留给后续 feature/runtime 验证回填。
+- `验证方式`: 静态检查 `EntityInformation` 构造函数确认其依次执行 `modBus.addListener`、`modContainer.registerConfig(ModConfig.Type.COMMON, Configs.SPEC)`、`Configs.syncFromConfig()`、`ItemTooltip.bootstrap(modBus)`、`MobDictionary.bootstrap(modBus)`；同时检查 `ItemTooltip.bootstrap` 与 `MobDictionary.bootstrap` 已分别接上 mod bus / NeoForge event bus、recipe serializer、attachments 和 items 注册链。补充运行 `./gradlew test --tests org.hhoa.mc.item_information.ModInfoTest --tests org.hhoa.mc.item_information.config.ConfigsTest --tests org.hhoa.mc.item_information.framework.Box2DTest --console plain`，确认模组 identity 与默认配置兼容层保持稳定。
+- `结论`: Task 4 已完成入口与配置的静态 bootstrap/config parity 审查，但未宣称真实 runtime registration 已验证，因此该条目以 `Accepted Diff` 收口并递延运行时确认。
 
 ## framework
 ### Entry 1: Box2D GUI 边界回归检查
@@ -38,20 +38,20 @@ This ledger seeds the 1.21 validation work from the `remotes/origin/v1.20.x` sou
 - `1.21 对应实现`: `M src/main/java/org/hhoa/mc/item_information/framework/Box2D.java`, `src/main/java/org/hhoa/mc/item_information/mobdictionary/client/gui/MobDictionaryGui.java`
 - `预期行为`: `Box2D` 的几何判断应继续支撑 GUI 命中区域与布局计算，避免 1.21 客户端界面出现点击范围偏移。
 - `当前状态`: `Verified`
-- `发现的问题`: Box2D 是 `mobdictionary/client/gui` 命中检测的直接依赖。按计划播种记录：invalid bound validation 曾经写反，导致非法边界没有被正确拦截；该崩溃修复已经在 `e105b64` 落地。
-- `修复动作`: 保留 `e105b64` 中对 invalid bound validation 反转问题的修复，并继续将 `Box2D` 作为 GUI 命中区域的基础回归面。
-- `验证方式`: 运行 `./gradlew test --tests org.hhoa.mc.item_information.framework.Box2DTest`，再结合 `MobDictionaryGui` 的手动界面命中检查确认结果。
-- `结论`: 该崩溃修复已按计划验证并接受，invalid bound validation 反转导致的崩溃问题已在 `e105b64` 修复完成，`Box2D` 条目当前为 `Verified`。
+- `发现的问题`: Box2D 是 `mobdictionary/client/gui` 命中检测的直接依赖。按计划播种记录：invalid bound validation 曾经写反，导致非法边界没有被正确拦截；此前只覆盖了正常边界，缺少 inverted-bounds regression 的显式测试。
+- `修复动作`: 保留 `e105b64` 中对 invalid bound validation 反转问题的修复，并在 `Box2DTest` 中补上 inverted-bounds regression coverage：IDE 环境下断言抛出 `IllegalStateException`，非 IDE 环境下断言边界会被规范化。
+- `验证方式`: 运行 `./gradlew test --tests org.hhoa.mc.item_information.ModInfoTest --tests org.hhoa.mc.item_information.config.ConfigsTest --tests org.hhoa.mc.item_information.framework.Box2DTest --console plain`，确认正常边界与 inverted-bounds regression coverage 均通过。
+- `结论`: `Box2D` 的正常边界和 inverted-bounds regression 都已在本轮 focused tests 中通过，framework 主回归条目保持 `Verified`。
 
 ### Entry 2: utils 运行时兼容性检查
 - `1.20 来源`: `src/main/java/org/hhoa/mc/item_information/utils/EntityUtils.java`, `src/main/java/org/hhoa/mc/item_information/utils/GameUtils.java`
 - `1.21 对应实现`: `M src/main/java/org/hhoa/mc/item_information/utils/EntityUtils.java`, `M src/main/java/org/hhoa/mc/item_information/utils/GameUtils.java`
 - `预期行为`: `EntityUtils` 的 attribute-holder 迁移应继续返回正确属性值或默认值，`GameUtils` 的 server-dist detection 应继续为运行时分支提供正确结果，不让依赖它们的功能静默偏离。
-- `当前状态`: `Pending`
-- `发现的问题`: `EntityUtils` 与 `GameUtils` 都在 1.21 diff 中被修改，但当前账本还没有单独记录它们对属性读取和 server-dist detection 的运行时影响，存在被 feature 级验证遗漏的风险。
-- `修复动作`: 将 `EntityUtils` 绑定到实体属性读取相关验证，将 `GameUtils` 绑定到服务端分支与客户端分支验证；必要时补做 dedicated-server 启动检查或消费方回归。
-- `验证方式`: 结合 `mobdictionary` 的实体数据和物品交互验证检查 attribute-holder migration，再通过服务端启动或 server-only 路径回归确认 `GameUtils` 的 server-dist detection 正常。
-- `结论`: utils/runtime 条目已补入账本，后续必须随消费方验证一并回填结果，避免 `EntityUtils` 与 `GameUtils` 被静默跳过。
+- `当前状态`: `Accepted Diff`
+- `发现的问题`: `EntityUtils` 与 `GameUtils` 的 1.21 变更确实需要后续消费方验证，但它们不属于 Task 4 的 build/bootstrap/config/framework parity 收口面；继续在本组保留 `Pending` 会误阻断 Task 4 关闭。
+- `修复动作`: 将该条目明确视为后续 consumer-group follow-up，随 `mobdictionary` / runtime 相关验证一起回填，而不是在 Task 4 中结案。
+- `验证方式`: 结合后续 `mobdictionary` 的实体数据、物品交互和服务端分支验证检查 attribute-holder migration 与 server-dist detection。
+- `结论`: 对 Task 4 而言，该 utils/runtime 条目作为递延到后续分组的审计差异接受，不再作为 `framework` 组的开放项。
 
 ## itemtooltip
 ### Entry 1: ItemTooltip 服务拆分首轮验证
