@@ -163,7 +163,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
@@ -174,7 +173,6 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.resources.language.I18n;
-import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
@@ -200,7 +198,6 @@ import org.hhoa.mc.item_information.mobdictionary.network.MobDictionaryButtonPay
 import org.hhoa.mc.item_information.utils.PlayerUtils;
 import org.hhoa.mc.item_information.utils.TextRenderer;
 import org.jetbrains.annotations.NotNull;
-import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 
 public class MobDictionaryGui extends Screen {
@@ -472,17 +469,15 @@ public class MobDictionaryGui extends Screen {
     }
 
     private void drawLockMobInfo(GuiGraphics matrixStack) {
-        this.font.drawInBatch(
-                "??????",
+        TextRenderer.drawSimpleText(
+                this.font,
+                matrixStack,
+                MobDictionaryTextContent.lockedDisplayName(
+                        Texts.UNKNOWN_BIOLOGY.getText(),
+                        this.entityTypes[this.currentNo].getA()),
                 originX + 19,
                 originY + 85,
-                this.stringColor,
-                false,
-                new Matrix4f(),
-                matrixStack.bufferSource(),
-                Font.DisplayMode.NORMAL,
-                0,
-                15728880);
+                this.stringColor);
     }
 
     public void drawUnLockMobInfo(GuiGraphics matrixStack) {
@@ -523,9 +518,9 @@ public class MobDictionaryGui extends Screen {
 
     public void drawMobNames(GuiGraphics matrixStack, int mouseX, int mouseY) {
         String str =
-                MobDatas.getRegisteredMobCountOnClient()
-                        + "/"
-                        + MobDictionary.getEntityManager().getAllMobCount();
+                MobDictionaryTextContent.progressText(
+                        MobDatas.getRegisteredMobCountOnClient(),
+                        MobDictionary.getEntityManager().getAllMobCount());
         TextRenderer.drawSimpleText(
                 this.font,
                 matrixStack,
@@ -587,9 +582,9 @@ public class MobDictionaryGui extends Screen {
     private String getDisplayName(EntityType<?> entityType, boolean unLock, Integer id) {
         String displayName;
         if (unLock) {
-            displayName = Language.getInstance().getOrDefault(entityType.getDescriptionId());
+            displayName = net.minecraft.locale.Language.getInstance().getOrDefault(entityType.getDescriptionId());
         } else {
-            displayName = Texts.UNKNOWN_BIOLOGY.getText() + id;
+            displayName = MobDictionaryTextContent.lockedDisplayName(Texts.UNKNOWN_BIOLOGY.getText(), id);
         }
         return displayName;
     }
