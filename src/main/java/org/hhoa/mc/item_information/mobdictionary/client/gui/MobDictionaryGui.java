@@ -168,6 +168,9 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
+import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -181,6 +184,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
+import net.neoforged.neoforge.client.renderstate.RenderStateExtensions;
 import org.hhoa.mc.item_information.EntityInformation;
 import org.hhoa.mc.item_information.framework.Box2D;
 import org.hhoa.mc.item_information.mobdictionary.MobDictionary;
@@ -261,7 +265,7 @@ public class MobDictionaryGui extends Screen {
                         .registerQuestHandler(
                                 Arrays.asList(EventType.DELETE, EventType.PUT),
                                 this::processMobDictionaryGuiButtonClickEventCallBack));
-        Button convertedPaperButton = getButton(8);
+        Button convertedPaperButton = getButton();
 
         if (Minecraft.getInstance().level != null) {
             lightningBolt =
@@ -312,7 +316,7 @@ public class MobDictionaryGui extends Screen {
         this.entityTypes = entityTypes.toArray(new Tuple[0]);
     }
 
-    private @NotNull Button getButton(int size) {
+    private @NotNull Button getButton() {
         MutableComponent empty = Component.empty();
         for (int i = 0; i < tooltipStringList.size(); i++) {
             if (i != tooltipStringList.size() - 1) {
@@ -322,10 +326,8 @@ public class MobDictionaryGui extends Screen {
         }
         Tooltip tooltip = Tooltip.create(empty);
         Button convertedPaperButton =
-                Button.builder(Component.literal("B"), this::convertedPaperButtonOnPress)
-                        .bounds(originX + 19, originY + 136, size, size)
-                        .tooltip(tooltip)
-                        .build();
+                new MobDictionaryConvertButton(
+                        originX + 19, originY + 134, this::convertedPaperButtonOnPress, tooltip);
         convertedPaperButton.active = this.entityTypes.length > 0;
         return convertedPaperButton;
     }
@@ -494,8 +496,8 @@ public class MobDictionaryGui extends Screen {
                 0.0F,
                 this.xSize,
                 this.ySize,
-                this.xSize,
-                this.ySize);
+                MobDictionaryEntityPreviewState.DICTIONARY_TEXTURE_SIZE,
+                MobDictionaryEntityPreviewState.DICTIONARY_TEXTURE_SIZE);
     }
 
     private void drawLockMobInfo(GuiGraphics matrixStack) {
@@ -523,13 +525,17 @@ public class MobDictionaryGui extends Screen {
         kvList.add(
                 new Tuple<>(
                         I18n.get(Attributes.ATTACK_DAMAGE.value().getDescriptionId()),
-                        String.format(":%.1f", displayEntity.getAttributeValue(Attributes.ATTACK_DAMAGE))));
+                        String.format(
+                                ":%.1f",
+                                MobDictionaryEntityPreviewState.attributeValueOrZero(
+                                        displayEntity.getAttributes(), Attributes.ATTACK_DAMAGE))));
         kvList.add(
                 new Tuple<>(
                         I18n.get(Attributes.MOVEMENT_SPEED.value().getDescriptionId()),
                         String.format(
                                 ":%.1f",
-                                displayEntity.getAttributeValue(Attributes.MOVEMENT_SPEED))));
+                                MobDictionaryEntityPreviewState.attributeValueOrZero(
+                                        displayEntity.getAttributes(), Attributes.MOVEMENT_SPEED))));
 
         int xStart = originX + 19, yStart = originY + 85, dY = 12, currentY = yStart;
         for (Tuple<String, String> tuple : kvList) {
@@ -676,7 +682,22 @@ public class MobDictionaryGui extends Screen {
         Quaternionf cameraRotation =
                 new Quaternionf().rotateAxis((float) Math.toRadians(-rotationY), 1, 0, 0);
         Vector3f translation = new Vector3f(0.0F, 0.0F, 0.0F);
-        int previewShadeColor = ENTITY_PREVIEW_STATE.previewShadeColor(isUnLock(displayEntity));
+        boolean unlocked = isUnLock(displayEntity);
+        MobDictionaryEntityPreviewState.PreviewBounds previewBounds =
+                MobDictionaryEntityPreviewState.previewBounds(
+                                (int) mobBox.getMinX(),
+                                (int) mobBox.getMinY(),
+                                (int) mobBox.getMaxX() + 1,
+                                (int) mobBox.getMaxY() + 1,
+                                originX + 49,
+                                originY + 70)
+                        .expanded(7, 10, 7, 4);
+        float renderScale =
+                ENTITY_PREVIEW_STATE.fitScale(
+                        entityScale,
+                        displayEntity.getBbWidth(),
+                        displayEntity.getBbHeight(),
+                        previewBounds);
 
         try {
             displayEntity.setYRot(previewRotation.yRot());
@@ -685,17 +706,37 @@ public class MobDictionaryGui extends Screen {
             displayEntity.yHeadRot = previewRotation.headRot();
             displayEntity.yHeadRotO = previewRotation.headRotO();
 
-            InventoryScreen.renderEntityInInventory(
-                    matrixStack,
-                    originX + 49,
-                    originY + 70,
-                    (int) (mobBox.getMaxX() - mobBox.getMinX()),
-                    (int) (mobBox.getMaxY() - mobBox.getMinY()),
-                    entityScale,
-                    translation,
-                    rotationZ,
-                    cameraRotation,
-                    displayEntity);
+            Vector3f entityTranslation =
+                    new Vector3f(
+                            translation.x,
+                            translation.y + displayEntity.getBbHeight() / 2.0F,
+                            translation.z);
+            if (unlocked) {
+                InventoryScreen.renderEntityInInventory(
+                        matrixStack,
+                        previewBounds.x1(),
+                        previewBounds.y1(),
+                        previewBounds.x2(),
+                        previewBounds.y2(),
+                        renderScale,
+                        entityTranslation,
+                        rotationZ,
+                        cameraRotation,
+                        displayEntity);
+            } else {
+                matrixStack.submitPictureInPictureRenderState(
+                        new LockedEntityRenderState(
+                                createEntityRenderState(displayEntity),
+                                entityTranslation,
+                                rotationZ,
+                                cameraRotation,
+                                previewBounds.x1(),
+                                previewBounds.y1(),
+                                previewBounds.x2(),
+                                previewBounds.y2(),
+                                renderScale,
+                                matrixStack.peekScissorStack()));
+            }
         } finally {
             displayEntity.setYRot(previousYRot);
             displayEntity.setXRot(previousXRot);
@@ -704,16 +745,16 @@ public class MobDictionaryGui extends Screen {
             displayEntity.yHeadRotO = previousHeadRotO;
         }
 
-        if ((previewShadeColor >>> 24) != 0) {
-            // InventoryScreen does not expose packed light, so locked previews use the packed-light
-            // policy to apply a real post-render dimmer over the preview box.
-            matrixStack.fill(
-                    (int) mobBox.getMinX(),
-                    (int) mobBox.getMinY(),
-                    (int) mobBox.getMaxX() + 1,
-                    (int) mobBox.getMaxY() + 1,
-                    previewShadeColor);
-        }
+    }
+
+    private static EntityRenderState createEntityRenderState(LivingEntity entity) {
+        EntityRenderDispatcher renderDispatcher = Minecraft.getInstance().getEntityRenderDispatcher();
+        EntityRenderer entityRenderer = renderDispatcher.getRenderer(entity);
+        EntityRenderState renderState = entityRenderer.createRenderState();
+        entityRenderer.extractRenderState(entity, renderState, 1.0F);
+        RenderStateExtensions.onUpdateEntityRenderState(entityRenderer, entity, renderState);
+        renderState.hitboxesRenderState = null;
+        return renderState;
     }
 
     private boolean isUnLock(LivingEntity displayEntity) {

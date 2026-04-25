@@ -167,6 +167,11 @@ public class TextRenderer {
 
     public static void drawSimpleText(
             Font font, GuiGraphics poseStack, Component component, float x, float y, int color) {
-        poseStack.drawString(font, component, Math.round(x), Math.round(y), color, false);
+        poseStack.drawString(
+                font, component, Math.round(x), Math.round(y), visibleTextColor(color), false);
+    }
+
+    static int visibleTextColor(int color) {
+        return (color & 0xFF000000) == 0 ? color | 0xFF000000 : color;
     }
 }

@@ -1,18 +1,9 @@
 {
-  "neoforge:conditions": [
-    {
-      "type": "neoforge:true"
-    }
-  ],
   "type": "minecraft:crafting_shaped",
   "category": "equipment",
   "key": {
-    "b": {
-      "item": "minecraft:book"
-    },
-    "s": {
-      "item": "minecraft:spyglass"
-    }
+    "b": "minecraft:book",
+    "s": "minecraft:spyglass"
   },
   "pattern": [
     "bs ",

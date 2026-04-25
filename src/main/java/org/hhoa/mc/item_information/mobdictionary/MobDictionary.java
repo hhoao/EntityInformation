@@ -5,12 +5,15 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.ShapedRecipe;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.hhoa.mc.item_information.ModInfo;
 import org.hhoa.mc.item_information.mobdictionary.attachment.ModAttachments;
+import org.hhoa.mc.item_information.mobdictionary.client.gui.MobDictionaryClientEventsHandler;
 import org.hhoa.mc.item_information.mobdictionary.network.Dispatcher;
 import org.hhoa.mc.item_information.registry.ModItems;
 
@@ -32,6 +35,9 @@ public final class MobDictionary {
 
     public static void bootstrap(IEventBus modBus) {
         modBus.register(new MobDictionaryFMLEventsHandler());
+        if (FMLEnvironment.dist == Dist.CLIENT) {
+            modBus.register(new MobDictionaryClientEventsHandler());
+        }
         NeoForge.EVENT_BUS.register(new MobDictionaryForgeEventsHandler());
         RECIPE_SERIALIZERS.register(modBus);
         ModAttachments.register(modBus);

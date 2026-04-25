@@ -1,9 +1,4 @@
 {
-  "neoforge:conditions": [
-    {
-      "type": "neoforge:true"
-    }
-  ],
   "parent": "minecraft:recipes/root",
   "criteria": {
     "has_book": {

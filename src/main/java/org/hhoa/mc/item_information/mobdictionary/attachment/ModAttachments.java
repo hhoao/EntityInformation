@@ -16,7 +16,7 @@ public final class ModAttachments {
             ATTACHMENTS.register(
                     "mob_data",
                     () -> AttachmentType.builder(MobSavedData::new)
-                            .serialize(MobSavedData.CODEC.codec())
+                            .serialize(MobSavedData.CODEC)
                             .copyOnDeath()
                             .build());
 

@@ -1,5 +1,7 @@
 package org.hhoa.mc.item_information.registry;
 
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.Item;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredItem;
@@ -12,10 +14,21 @@ public final class ModItems {
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(ModInfo.ID);
 
     public static final DeferredItem<Item> MOB_DATA =
-            ITEMS.register("data", () -> new MobDataItem(new Item.Properties().stacksTo(1)));
+            ITEMS.register(
+                    "data",
+                    key ->
+                            new MobDataItem(
+                                    new Item.Properties()
+                                            .setId(ResourceKey.create(Registries.ITEM, key))
+                                            .stacksTo(1)));
     public static final DeferredItem<Item> MOB_DICTIONARY =
             ITEMS.register(
-                    "dictionary", () -> new MobDictionaryItem(new Item.Properties().stacksTo(1)));
+                    "dictionary",
+                    key ->
+                            new MobDictionaryItem(
+                                    new Item.Properties()
+                                            .setId(ResourceKey.create(Registries.ITEM, key))
+                                            .stacksTo(1)));
 
     private ModItems() {}
 

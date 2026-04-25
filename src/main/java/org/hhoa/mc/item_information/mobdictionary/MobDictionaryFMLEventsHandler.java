@@ -179,11 +179,12 @@ public class MobDictionaryFMLEventsHandler {
     }
 
     @SubscribeEvent
-    public void onGatherData(GatherDataEvent event) {
-        MobDictionaryRecipeProvider myRecipeProvider =
-                new MobDictionaryRecipeProvider(
-                        event.getGenerator().getPackOutput(), event.getLookupProvider());
-        event.getGenerator().addProvider(true, myRecipeProvider);
+    public void onGatherData(GatherDataEvent.Server event) {
+        event.getGenerator()
+                .addProvider(
+                        true,
+                        new MobDictionaryRecipeProvider.Runner(
+                                event.getGenerator().getPackOutput(), event.getLookupProvider()));
     }
 
     @SubscribeEvent

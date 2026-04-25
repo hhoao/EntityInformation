@@ -168,7 +168,6 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
@@ -330,7 +329,7 @@ public class ItemTooltipForgeEventsHandler {
     public static void openItemSearchWebOnWiki(ItemStack stack) throws IOException {
         LanguageManager languageManager = Minecraft.getInstance().getLanguageManager();
         String name = languageManager.getSelected().split("_")[0];
-        String itemName = I18n.get(stack.getDescriptionId()).replace(" ", "_");
+        String itemName = I18n.get(stack.getItem().getDescriptionId()).replace(" ", "_");
         String apiUrl = String.format("https://%s.minecraft.wiki/w/%s", name, itemName);
         openBrowser(apiUrl);
     }
@@ -345,15 +344,18 @@ public class ItemTooltipForgeEventsHandler {
     }
 
     public static void openItemSearchWebOnMcmod(ItemStack stack) throws IOException {
-        String modName =
-                URLEncoder.encode(
-                        Objects.requireNonNull(stack.getItem().getCreatorModId(stack)),
-                        StandardCharsets.UTF_8);
-        String regName =
-                URLEncoder.encode(
-                        Objects.requireNonNull(BuiltInRegistries.ITEM.getKey(stack.getItem()))
-                                .toString(),
-                        StandardCharsets.UTF_8);
+        ResourceLocation registryName = BuiltInRegistries.ITEM.getKey(stack.getItem());
+        String creatorModId = registryName.getNamespace();
+        if (Minecraft.getInstance().level != null) {
+            String itemCreatorModId =
+                    stack.getItem()
+                            .getCreatorModId(Minecraft.getInstance().level.registryAccess(), stack);
+            if (itemCreatorModId != null) {
+                creatorModId = itemCreatorModId;
+            }
+        }
+        String modName = URLEncoder.encode(creatorModId, StandardCharsets.UTF_8);
+        String regName = URLEncoder.encode(registryName.toString(), StandardCharsets.UTF_8);
         String displayName =
                 URLEncoder.encode(stack.getDisplayName().getString(), StandardCharsets.UTF_8);
         URL apiUrl = new URL(String.format("https://api.mcmod.cn/getItem/?regname=%s", regName));
