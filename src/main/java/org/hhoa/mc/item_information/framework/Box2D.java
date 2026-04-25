@@ -173,7 +173,7 @@ public class Box2D {
         this.minY = minY;
         this.maxX = maxX;
         this.maxY = maxY;
-        if (minX < maxX || minY < maxY) {
+        if (minX > maxX || minY > maxY) {
             String s = "Invalid bounding box data, inverted bounds for: " + this;
             if (SharedConstants.IS_RUNNING_IN_IDE) {
                 throw new IllegalStateException(s);
