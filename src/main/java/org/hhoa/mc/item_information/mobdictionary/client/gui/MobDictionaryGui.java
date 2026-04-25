@@ -727,23 +727,33 @@ public class MobDictionaryGui extends Screen {
     private void initDisplayEntity(EntityType<?> entityResourceLocation) {
         if (entityResourceLocation == null) {
             displayEntity = null;
-        } else {
-            if (displayEntity == null || displayEntity.getType() != entityResourceLocation) {
-                if (displayEntity != null) {
-                    displayEntity.discard();
-                }
-                displayEntity =
-                        this.minecraft.level == null
-                                ? null
-                                : (LivingEntity)
-                                        entityResourceLocation.create(
-                                                this.minecraft.level, EntitySpawnReason.COMMAND);
-            }
-            setEntityStatus();
+            return;
         }
+
+        if (displayEntity == null || displayEntity.getType() != entityResourceLocation) {
+            if (displayEntity != null) {
+                displayEntity.discard();
+            }
+            displayEntity =
+                    this.minecraft.level == null
+                            ? null
+                            : (LivingEntity)
+                                    entityResourceLocation.create(
+                                            this.minecraft.level, EntitySpawnReason.COMMAND);
+        }
+
+        if (displayEntity == null) {
+            return;
+        }
+
+        setEntityStatus();
     }
 
     private void setEntityStatus() {
+        if (displayEntity == null) {
+            return;
+        }
+
         if (displayEntity.getType() == EntityType.CREEPER) {
             MobStatusEnum mobStatus = MobStatusEnum.values()[currentMobStatus];
             if (mobStatus == MobStatusEnum.THUNDER
