@@ -101,19 +101,19 @@ This ledger seeds the 1.21 validation work from the `remotes/origin/v1.20.x` sou
 - `1.20 来源`: `src/generated/resources/data/entity_information/advancements/recipes/dictionary.json`, `src/generated/resources/data/entity_information/recipes/dictionary.json`
 - `1.21 对应实现`: `A src/generated/resources/data/entity_information/advancement/recipes/tools/dictionary.json`, `D src/generated/resources/data/entity_information/advancements/recipes/dictionary.json`, `A src/generated/resources/data/entity_information/recipe/dictionary.json`, `D src/generated/resources/data/entity_information/recipes/dictionary.json`
 - `预期行为`: 数据生成输出应与 NeoForge 1.21 当前 provider 期望的目录结构一致，生成后的配方与进度文件能被正常发现。
-- `当前状态`: `Accepted Diff`
-- `发现的问题`: 目录从复数路径迁移到单数路径是 NeoForge 1.21 数据生成语义变化；当前 `MobDictionaryRecipeProvider` 已写向 `recipe/dictionary.json` 和 `advancement/recipes/tools/dictionary.json`，与工作区里的生成物一致，没有看到需要回滚的偏差。
+- `当前状态`: `Verified`
+- `发现的问题`: 目录从复数路径迁移到单数路径是 NeoForge 1.21 数据生成语义变化；`MobDictionaryRecipeProvider` 仍然写向 `recipe/dictionary.json` 和 `advancement/recipes/tools/dictionary.json`，本轮重新生成后没有出现 tracked 输出漂移。
 - `修复动作`: 无需额外代码修复；保留当前 provider/生成物命名。
-- `验证方式`: 静态核对 `MobDictionaryRecipeProvider` 与 `src/generated/resources/data/entity_information/recipe/dictionary.json`、`src/generated/resources/data/entity_information/advancement/recipes/tools/dictionary.json` 的路径一致性；本轮未重新跑 `runData`。
-- `结论`: 目录重排是已接受的 1.21 diff，暂不需要后续代码跟进。
+- `验证方式`: 已运行 `./gradlew runData --console plain`，生成任务成功结束，且输出目录仍与 `src/generated/resources/data/entity_information/recipe/dictionary.json`、`src/generated/resources/data/entity_information/advancement/recipes/tools/dictionary.json` 的路径约定一致。
+- `结论`: 目录重排的生成证据已补齐，当前验证可收口为 `Verified`；由于生成结果与现有 tracked 文件保持一致，这次 rerun 没有产生额外的可提交生成物差异。
 
 ## 测试与验证
 ### Entry 1: 首轮验证命令矩阵
 - `已交付行为基线`: framework 边界检查、itemtooltip 行为、mobdictionary 保存数据、物品交互、payload 编解码，以及 GUI 与构建链的既有功能面
 - `1.21 验证覆盖`: `src/test/java/org/hhoa/mc/TemplateResourceTest.java`, `src/test/java/org/hhoa/mc/TestResources.java`, `src/test/java/org/hhoa/mc/item_information/ModInfoTest.java`, `src/test/java/org/hhoa/mc/item_information/config/ConfigsTest.java`, `src/test/java/org/hhoa/mc/item_information/framework/Box2DTest.java`, `src/test/java/org/hhoa/mc/item_information/itemtooltip/ItemTooltipTest.java`, `src/test/java/org/hhoa/mc/item_information/itemtooltip/ItemTooltipServiceTest.java`, `src/test/java/org/hhoa/mc/item_information/mobdictionary/client/gui/MobDictionaryTextContentTest.java`, `src/test/java/org/hhoa/mc/item_information/mobdictionary/client/gui/MobDictionaryEntityPreviewStateTest.java`, `src/test/java/org/hhoa/mc/item_information/mobdictionary/data/MobSavedDataTest.java`, `src/test/java/org/hhoa/mc/item_information/mobdictionary/item/MobDataItemTest.java`, `src/test/java/org/hhoa/mc/item_information/mobdictionary/network/PayloadCodecTest.java`，以及 GUI 手动回归、构建检查、数据生成检查；其中 `MobDictionaryTextContentTest` 用于聚焦文本内容格式回归覆盖，`MobDictionaryEntityPreviewStateTest` 用于聚焦 preview-state regression coverage
 - `预期行为`: 首轮验证应覆盖 framework、itemtooltip、mobdictionary、generated resources 和构建链，形成可复用的验证矩阵。
-- `当前状态`: `Pending`
-- `发现的问题`: 目前账本只完成了条目播种，尚未把测试结果回填到各条目状态中。
-- `修复动作`: 后续执行单元测试、GUI 回归和构建检查时，将结果分别回填到对应章节，并同步更新本节矩阵状态。
-- `验证方式`: `./gradlew test`, `./gradlew build`, `./gradlew runData`，以及 `MobDictionaryGui` 手动回归。
-- `结论`: 测试章节已转换为首轮验证入口，待真实验证结果回填。
+- `当前状态`: `Checking`
+- `发现的问题`: 自动化验证已经拿到真实证据，但 `MobDictionaryGui` 的手动 in-game smoke 仍未完成，因此不能把整张矩阵写成已完全闭环。
+- `修复动作`: 后续若补到客户端手动回归，再把 GUI/runtime 相关条目从 `Checking` 或 `Fixing` 收口；当前先只记录已经通过的自动化命令。
+- `验证方式`: 已运行并通过 `./gradlew runData --console plain`、`./gradlew test --console plain`、`./gradlew build --console plain`；`MobDictionaryGui` 手动回归仍待补做。
+- `结论`: 自动化验证矩阵已关闭到可关闭的范围，但整体 ledger 仍保留少量手动游戏烟雾测试待完成的开放项。
