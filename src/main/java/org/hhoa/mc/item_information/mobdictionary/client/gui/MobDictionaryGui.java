@@ -199,6 +199,7 @@ public class MobDictionaryGui extends Screen {
             EntityInformation.location("textures/gui/dictionary.png");
     private static final MobDictionaryEntityPreviewState ENTITY_PREVIEW_STATE =
             new MobDictionaryEntityPreviewState(20.0F, 26.0F);
+    private static final int BACKDROP_TINT = 0x66000000;
 
     protected int xSize = 176;
     protected int ySize = 166;
@@ -390,6 +391,7 @@ public class MobDictionaryGui extends Screen {
     public void render(
             @NotNull GuiGraphics matrixStack, int mouseX, int mouseY, float partialTicks) {
         this.yaw2 = this.yaw;
+        this.renderTransparentBackground(matrixStack);
         this.drawGuiBackgroundLayer(matrixStack);
 
         if (this.entityTypes.length > 0) {
@@ -409,6 +411,24 @@ public class MobDictionaryGui extends Screen {
         this.drawMobNames(matrixStack, mouseX, mouseY);
         super.render(matrixStack, mouseX, mouseY, partialTicks);
         this.yaw = 2.0D + yaw2 + (yaw2 - yaw) * partialTicks;
+    }
+
+    @Override
+    public void renderBackground(
+            @NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        this.renderTransparentBackground(guiGraphics);
+    }
+
+    @Override
+    protected void renderBlurredBackground(float partialTick) {
+        // NeoForge 1.21 screens default to a menu blur backdrop. The dictionary keeps its own
+        // translucent overlay so the book and text stay crisp when compatibility layers call
+        // Screen background hooks.
+    }
+
+    @Override
+    public void renderTransparentBackground(@NotNull GuiGraphics guiGraphics) {
+        guiGraphics.fill(0, 0, this.width, this.height, BACKDROP_TINT);
     }
 
     @Override
