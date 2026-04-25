@@ -154,30 +154,24 @@
 
 package org.hhoa.mc.item_information.mobdictionary.client.gui;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
-import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Tuple;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.LivingEntity;
@@ -185,7 +179,6 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.network.PacketDistributor;
-import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import org.hhoa.mc.item_information.EntityInformation;
 import org.hhoa.mc.item_information.framework.Box2D;
 import org.hhoa.mc.item_information.mobdictionary.MobDictionary;
@@ -199,10 +192,13 @@ import org.hhoa.mc.item_information.utils.PlayerUtils;
 import org.hhoa.mc.item_information.utils.TextRenderer;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 public class MobDictionaryGui extends Screen {
     private static final ResourceLocation dictionaryResource =
             EntityInformation.location("textures/gui/dictionary.png");
+    private static final MobDictionaryEntityPreviewState ENTITY_PREVIEW_STATE =
+            new MobDictionaryEntityPreviewState(20.0F, 26.0F);
 
     protected int xSize = 176;
     protected int ySize = 166;
@@ -224,9 +220,7 @@ public class MobDictionaryGui extends Screen {
     protected static LivingEntity displayEntity;
     protected static LightningBolt lightningBolt;
 
-    protected final float entityInitScale = 22F;
-    protected final float entityMinScale = 20F;
-    protected final float entityMaxScale = 26F;
+    protected final float entityInitScale = ENTITY_PREVIEW_STATE.clampScale(22F);
     protected float entityScale = entityInitScale;
     protected double yaw = 0.0D;
     protected double yaw2 = 0.0D;
@@ -403,7 +397,7 @@ public class MobDictionaryGui extends Screen {
         }
 
         if (displayEntity != null) {
-            drawMobModel();
+            drawMobModel(matrixStack);
             if (isUnLock(displayEntity)) {
                 drawUnLockMobInfo(matrixStack);
             } else {
@@ -592,9 +586,7 @@ public class MobDictionaryGui extends Screen {
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
         if (mobBox.isInBox(mouseX, mouseY)) {
-            entityScale = (float) scrollY + entityScale;
-            entityScale = Math.max(entityScale, entityMinScale);
-            entityScale = Math.min(entityScale, entityMaxScale);
+            entityScale = ENTITY_PREVIEW_STATE.clampScale((float) scrollY + entityScale);
         }
 
         nameListScroll(mouseX, mouseY, scrollY);
@@ -636,39 +628,54 @@ public class MobDictionaryGui extends Screen {
         }
     }
 
-    protected void drawMobModel() {
-        EntityRenderDispatcher entityRenderDispatcher =
-                Minecraft.getInstance().getEntityRenderDispatcher();
-
-        PoseStack poseStack = new PoseStack();
-        float scale = entityScale;
-        poseStack.translate(originX + 49, originY + 70, 10);
-        poseStack.scale(scale, scale, scale);
+    protected void drawMobModel(GuiGraphics matrixStack) {
+        MobDictionaryEntityPreviewState.PreviewEntityRotation previewRotation =
+                ENTITY_PREVIEW_STATE.previewEntityRotation(rotationX, rotationY);
+        float previousYRot = displayEntity.getYRot();
+        float previousXRot = displayEntity.getXRot();
+        float previousBodyRot = displayEntity.yBodyRot;
+        float previousHeadRot = displayEntity.yHeadRot;
+        float previousHeadRotO = displayEntity.yHeadRotO;
         Quaternionf rotationZ = new Quaternionf().rotateAxis((float) Math.toRadians(180), 0, 0, 1);
-        poseStack.mulPose(rotationZ);
-        Quaternionf rotationYq =
-                new Quaternionf().rotateAxis((float) Math.toRadians(-rotationX), 0, 1, 0);
-        poseStack.mulPose(rotationYq);
-        Quaternionf rotationX =
-                new Quaternionf().rotateAxis((float) Math.toRadians(rotationY), 1, 0, 0);
-        poseStack.mulPose(rotationX);
+        Quaternionf cameraRotation =
+                new Quaternionf().rotateAxis((float) Math.toRadians(-rotationY), 1, 0, 0);
+        Vector3f translation = new Vector3f(0.0F, 0.0F, 0.0F);
+        int previewShadeColor = ENTITY_PREVIEW_STATE.previewShadeColor(isUnLock(displayEntity));
 
-        int light;
+        try {
+            displayEntity.setYRot(previewRotation.yRot());
+            displayEntity.setXRot(previewRotation.xRot());
+            displayEntity.yBodyRot = previewRotation.bodyRot();
+            displayEntity.yHeadRot = previewRotation.headRot();
+            displayEntity.yHeadRotO = previewRotation.headRotO();
 
-        if (!isUnLock(displayEntity)) {
-            light = LightTexture.pack(0, 0);
-        } else {
-            light = LightTexture.pack(15, 15);
+            InventoryScreen.renderEntityInInventory(
+                    matrixStack,
+                    originX + 49.0F,
+                    originY + 70.0F,
+                    entityScale,
+                    translation,
+                    rotationZ,
+                    cameraRotation,
+                    displayEntity);
+        } finally {
+            displayEntity.setYRot(previousYRot);
+            displayEntity.setXRot(previousXRot);
+            displayEntity.yBodyRot = previousBodyRot;
+            displayEntity.yHeadRot = previousHeadRot;
+            displayEntity.yHeadRotO = previousHeadRotO;
         }
 
-        MultiBufferSource.BufferSource bufferSource =
-                Minecraft.getInstance().renderBuffers().bufferSource();
-
-        EntityRenderer<? super Entity> renderer =
-                entityRenderDispatcher.getRenderer(this.displayEntity);
-        renderer.render(this.displayEntity, 0.0F, 1.0F, poseStack, bufferSource, light);
-
-        bufferSource.endBatch();
+        if ((previewShadeColor >>> 24) != 0) {
+            // InventoryScreen does not expose packed light, so locked previews use the packed-light
+            // policy to apply a real post-render dimmer over the preview box.
+            matrixStack.fill(
+                    (int) mobBox.getMinX(),
+                    (int) mobBox.getMinY(),
+                    (int) mobBox.getMaxX() + 1,
+                    (int) mobBox.getMaxY() + 1,
+                    previewShadeColor);
+        }
     }
 
     private boolean isUnLock(LivingEntity displayEntity) {
@@ -696,10 +703,11 @@ public class MobDictionaryGui extends Screen {
     private void setEntityStatus() {
         if (displayEntity.getType() == EntityType.CREEPER) {
             MobStatusEnum mobStatus = MobStatusEnum.values()[currentMobStatus];
-            if (Objects.requireNonNull(mobStatus) == MobStatusEnum.THUNDER
-                    && ServerLifecycleHooks.getCurrentServer() != null) {
+            if (mobStatus == MobStatusEnum.THUNDER
+                    && Minecraft.getInstance().getSingleplayerServer() != null) {
                 displayEntity.thunderHit(
-                        ServerLifecycleHooks.getCurrentServer().overworld(), lightningBolt);
+                        Minecraft.getInstance().getSingleplayerServer().overworld(),
+                        lightningBolt);
                 displayEntity.heal(20);
             }
         }
