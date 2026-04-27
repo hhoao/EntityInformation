@@ -133,3 +133,6 @@ gradle-app.setting
 ./build
 ./gradle
 .idea/**
+docs/superpowers
+
+logs

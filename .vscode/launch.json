@@ -1,0 +1,93 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "request": "launch",
+      "name": "Client",
+      "presentation": {
+        "group": "Mod Development - EntityInformation",
+        "order": 0
+      },
+      "projectName": "EntityInformation",
+      "mainClass": "net.neoforged.devlaunch.Main",
+      "args": [
+        "@/home/hhoa/git/hhoa/EntityInformation/build/moddev/clientRunProgramArgs.txt"
+      ],
+      "vmArgs": [
+        "@/home/hhoa/git/hhoa/EntityInformation/build/moddev/clientRunVmArgs.txt",
+        "-Dfml.modFolders\u003dentity_information%%/home/hhoa/git/hhoa/EntityInformation/bin/main"
+      ],
+      "cwd": "${workspaceFolder}/run",
+      "env": {},
+      "console": "internalConsole",
+      "shortenCommandLine": "none"
+    },
+    {
+      "type": "java",
+      "request": "launch",
+      "name": "Data",
+      "presentation": {
+        "group": "Mod Development - EntityInformation",
+        "order": 1
+      },
+      "projectName": "EntityInformation",
+      "mainClass": "net.neoforged.devlaunch.Main",
+      "args": [
+        "@/home/hhoa/git/hhoa/EntityInformation/build/moddev/dataRunProgramArgs.txt"
+      ],
+      "vmArgs": [
+        "@/home/hhoa/git/hhoa/EntityInformation/build/moddev/dataRunVmArgs.txt",
+        "-Dfml.modFolders\u003dentity_information%%/home/hhoa/git/hhoa/EntityInformation/bin/main"
+      ],
+      "cwd": "${workspaceFolder}/run",
+      "env": {},
+      "console": "internalConsole",
+      "shortenCommandLine": "none"
+    },
+    {
+      "type": "java",
+      "request": "launch",
+      "name": "GameTestServer",
+      "presentation": {
+        "group": "Mod Development - EntityInformation",
+        "order": 2
+      },
+      "projectName": "EntityInformation",
+      "mainClass": "net.neoforged.devlaunch.Main",
+      "args": [
+        "@/home/hhoa/git/hhoa/EntityInformation/build/moddev/gameTestServerRunProgramArgs.txt"
+      ],
+      "vmArgs": [
+        "@/home/hhoa/git/hhoa/EntityInformation/build/moddev/gameTestServerRunVmArgs.txt",
+        "-Dfml.modFolders\u003dentity_information%%/home/hhoa/git/hhoa/EntityInformation/bin/main"
+      ],
+      "cwd": "${workspaceFolder}/run",
+      "env": {},
+      "console": "internalConsole",
+      "shortenCommandLine": "none"
+    },
+    {
+      "type": "java",
+      "request": "launch",
+      "name": "Server",
+      "presentation": {
+        "group": "Mod Development - EntityInformation",
+        "order": 3
+      },
+      "projectName": "EntityInformation",
+      "mainClass": "net.neoforged.devlaunch.Main",
+      "args": [
+        "@/home/hhoa/git/hhoa/EntityInformation/build/moddev/serverRunProgramArgs.txt"
+      ],
+      "vmArgs": [
+        "@/home/hhoa/git/hhoa/EntityInformation/build/moddev/serverRunVmArgs.txt",
+        "-Dfml.modFolders\u003dentity_information%%/home/hhoa/git/hhoa/EntityInformation/bin/main"
+      ],
+      "cwd": "${workspaceFolder}/run",
+      "env": {},
+      "console": "internalConsole",
+      "shortenCommandLine": "none"
+    }
+  ]
+}
