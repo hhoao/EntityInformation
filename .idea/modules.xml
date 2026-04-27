@@ -2,6 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/EntityInformation.entity_information.main.iml" filepath="$PROJECT_DIR$/.idea/modules/EntityInformation.entity_information.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/EntityInformation.entity_information.test.iml" filepath="$PROJECT_DIR$/.idea/modules/EntityInformation.entity_information.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/entity_information.main.iml" filepath="$PROJECT_DIR$/.idea/modules/entity_information.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/entity_information.test.iml" filepath="$PROJECT_DIR$/.idea/modules/entity_information.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/org.hhoa.mc.entity_information.main.iml" filepath="$PROJECT_DIR$/.idea/modules/org.hhoa.mc.entity_information.main.iml" />
