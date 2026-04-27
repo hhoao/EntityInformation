@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -13,6 +14,10 @@ import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
+import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -105,7 +110,7 @@ public class MobDictionaryGui extends Screen {
                         .registerQuestHandler(
                                 Arrays.asList(EventType.DELETE, EventType.PUT),
                                 this::processMobDictionaryGuiButtonClickEventCallBack));
-        Button convertedPaperButton = getButton(8);
+        Button convertedPaperButton = getButton();
 
         lightningBolt = EntityType.LIGHTNING_BOLT.create(Minecraft.getInstance().level);
         this.addRenderableWidget(convertedPaperButton);
@@ -152,7 +157,7 @@ public class MobDictionaryGui extends Screen {
         this.entityTypes = entityTypes.toArray(new Tuple[0]);
     }
 
-    private @NotNull Button getButton(int size) {
+    private @NotNull Button getButton() {
         MutableComponent empty = Component.empty();
         for (int i = 0; i < tooltipStringList.size(); i++) {
             if (i != tooltipStringList.size() - 1) {
@@ -162,10 +167,8 @@ public class MobDictionaryGui extends Screen {
         }
         Tooltip tooltip = Tooltip.create(empty);
         Button convertedPaperButton =
-                Button.builder(Component.literal("B"), this::convertedPaperButtonOnPress)
-                        .bounds(originX + 19, originY + 136, size, size)
-                        .tooltip(tooltip)
-                        .build();
+                new MobDictionaryConvertButton(
+                        originX + 19, originY + 134, this::convertedPaperButtonOnPress, tooltip);
         convertedPaperButton.active = this.entityTypes.length > 0;
         return convertedPaperButton;
     }
@@ -506,7 +509,7 @@ public class MobDictionaryGui extends Screen {
         Quaternionf cameraRotation =
                 new Quaternionf().rotateAxis((float) Math.toRadians(-rotationY), 1, 0, 0);
         Vector3f translation = new Vector3f(0.0F, 0.0F, 0.0F);
-        int previewShadeColor = ENTITY_PREVIEW_STATE.previewShadeColor(isUnLock(displayEntity));
+        boolean unlocked = isUnLock(displayEntity);
 
         try {
             displayEntity.setYRot(previewRotation.yRot());
@@ -515,15 +518,19 @@ public class MobDictionaryGui extends Screen {
             displayEntity.yHeadRot = previewRotation.headRot();
             displayEntity.yHeadRotO = previewRotation.headRotO();
 
-            InventoryScreen.renderEntityInInventory(
-                    matrixStack,
-                    originX + 49.0F,
-                    originY + 70.0F,
-                    entityScale,
-                    translation,
-                    rotationZ,
-                    cameraRotation,
-                    displayEntity);
+            if (unlocked) {
+                InventoryScreen.renderEntityInInventory(
+                        matrixStack,
+                        originX + 49.0F,
+                        originY + 70.0F,
+                        entityScale,
+                        translation,
+                        rotationZ,
+                        cameraRotation,
+                        displayEntity);
+            } else {
+                renderLockedEntity(matrixStack);
+            }
         } finally {
             displayEntity.setYRot(previousYRot);
             displayEntity.setXRot(previousXRot);
@@ -531,16 +538,34 @@ public class MobDictionaryGui extends Screen {
             displayEntity.yHeadRot = previousHeadRot;
             displayEntity.yHeadRotO = previousHeadRotO;
         }
+    }
 
-        if ((previewShadeColor >>> 24) != 0) {
-            // InventoryScreen does not expose packed light, so locked previews use the packed-light
-            // policy to apply a real post-render dimmer over the preview box.
-            matrixStack.fill(
-                    (int) mobBox.getMinX(),
-                    (int) mobBox.getMinY(),
-                    (int) mobBox.getMaxX() + 1,
-                    (int) mobBox.getMaxY() + 1,
-                    previewShadeColor);
+    private void renderLockedEntity(GuiGraphics matrixStack) {
+        EntityRenderDispatcher entityRenderDispatcher =
+                Minecraft.getInstance().getEntityRenderDispatcher();
+        PoseStack poseStack = matrixStack.pose();
+        poseStack.pushPose();
+        poseStack.translate(originX + 49, originY + 70, 10);
+        poseStack.scale(entityScale, entityScale, entityScale);
+        poseStack.mulPose(new Quaternionf().rotateAxis((float) Math.toRadians(180), 0, 0, 1));
+        poseStack.mulPose(new Quaternionf().rotateAxis((float) Math.toRadians(-rotationX), 0, 1, 0));
+        poseStack.mulPose(new Quaternionf().rotateAxis((float) Math.toRadians(rotationY), 1, 0, 0));
+
+        try {
+            MultiBufferSource.BufferSource bufferSource =
+                    Minecraft.getInstance().renderBuffers().bufferSource();
+            EntityRenderer<? super LivingEntity> renderer =
+                    entityRenderDispatcher.getRenderer(this.displayEntity);
+            renderer.render(
+                    this.displayEntity,
+                    0.0F,
+                    1.0F,
+                    poseStack,
+                    new BlackSilhouetteMultiBufferSource(bufferSource),
+                    LightTexture.pack(15, 15));
+            bufferSource.endBatch();
+        } finally {
+            poseStack.popPose();
         }
     }
 
