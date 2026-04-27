@@ -1,7 +1,10 @@
 package org.hhoa.mc.item_information.mobdictionary.client.gui;
 
 import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.core.Holder;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeMap;
 
 record MobDictionaryEntityPreviewState(float minScale, float maxScale) {
     private static final int MAX_PREVIEW_BRIGHTNESS =
@@ -15,6 +18,10 @@ record MobDictionaryEntityPreviewState(float minScale, float maxScale) {
 
     static int packedLight(boolean unlocked) {
         return unlocked ? LightTexture.pack(15, 15) : LightTexture.pack(0, 0);
+    }
+
+    static double attributeValueOrZero(AttributeMap attributes, Holder<Attribute> attribute) {
+        return attributes.hasAttribute(attribute) ? attributes.getValue(attribute) : 0.0D;
     }
 
     PreviewEntityRotation previewEntityRotation(float horizontalRotation, float verticalRotation) {

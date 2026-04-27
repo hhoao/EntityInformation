@@ -356,13 +356,17 @@ public class MobDictionaryGui extends Screen {
         kvList.add(
                 new Tuple<>(
                         I18n.get(Attributes.ATTACK_DAMAGE.value().getDescriptionId()),
-                        String.format(":%.1f", displayEntity.getAttributeValue(Attributes.ATTACK_DAMAGE))));
+                        String.format(
+                                ":%.1f",
+                                MobDictionaryEntityPreviewState.attributeValueOrZero(
+                                        displayEntity.getAttributes(), Attributes.ATTACK_DAMAGE))));
         kvList.add(
                 new Tuple<>(
                         I18n.get(Attributes.MOVEMENT_SPEED.value().getDescriptionId()),
                         String.format(
                                 ":%.1f",
-                                displayEntity.getAttributeValue(Attributes.MOVEMENT_SPEED))));
+                                MobDictionaryEntityPreviewState.attributeValueOrZero(
+                                        displayEntity.getAttributes(), Attributes.MOVEMENT_SPEED))));
 
         int xStart = originX + 19, yStart = originY + 85, dY = 12, currentY = yStart;
         for (Tuple<String, String> tuple : kvList) {

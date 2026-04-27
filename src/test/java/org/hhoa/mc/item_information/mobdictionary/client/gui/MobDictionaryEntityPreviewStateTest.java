@@ -3,6 +3,9 @@ package org.hhoa.mc.item_information.mobdictionary.client.gui;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.world.entity.ai.attributes.AttributeMap;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import org.junit.jupiter.api.Test;
 
 class MobDictionaryEntityPreviewStateTest {
@@ -41,5 +44,17 @@ class MobDictionaryEntityPreviewStateTest {
 
         assertEquals(0x00000000, previewState.previewShadeColor(true));
         assertEquals(0xA0000000, previewState.previewShadeColor(false));
+    }
+
+    @Test
+    void missingAttributeValueDefaultsToZero() {
+        AttributeSupplier supplier =
+                AttributeSupplier.builder().add(Attributes.MAX_HEALTH, 10.0D).build();
+        AttributeMap attributes = new AttributeMap(supplier);
+
+        assertEquals(
+                0.0D,
+                MobDictionaryEntityPreviewState.attributeValueOrZero(
+                        attributes, Attributes.ATTACK_DAMAGE));
     }
 }
